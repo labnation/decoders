@@ -88,3 +88,12 @@ Build the project
 Copy the output DLL from the build directory (i.e. ```./MyDecoders/bin/Debug/MyDecoders.dll```) to ```<My Documents>/LabNation/Plugins```
 
 Restart the SmartScope app and enjoy your decoder
+
+## DLL location
+| Platform        | Path          | 
+| ------------- | ------------- |
+| Mac           | ```/Users/<username>/LabNation/Plugins``` |
+| Linux         | ```~/LabNation/Plugins```                 |
+| Windows       | ```<My Documents>/LabNation/Plugins```    |
+| Android       | ```<sd-card>/LabNation/Plugins```         |
+
