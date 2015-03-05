@@ -15,10 +15,10 @@ namespace LabNation.Interfaces
         public string Text { get; private set; }
         public DecoderOutputColor Color { get; private set; }
 
-        public DecoderOutput(int startLocation, int endLocation, DecoderOutputColor color, string text)
+        public DecoderOutput(int startIndex, int endIndex, DecoderOutputColor color, string text)
         {
-            this.StartIndex = startLocation;
-            this.EndIndex = endLocation;
+            this.StartIndex = startIndex;
+            this.EndIndex = endIndex;
             this.Text = text;
             this.Color = color;
         }
