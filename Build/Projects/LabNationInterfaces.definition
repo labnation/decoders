@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Name="LabNationInterfaces" Path="Interfaces" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows">
+  <References>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </References>
+  <Properties>
+    <FrameworkVersions>
+      <Platform Name="Android">
+        <Version>v4.0</Version>
+      </Platform>
+    </FrameworkVersions>  
+    <NoWarn>1591</NoWarn>
+    <RootNamespace>LabNation</RootNamespace>
+    <PlatformSpecificOutputFolder>False</PlatformSpecificOutputFolder>
+    <CustomDefinitions>
+      <Platform Name="Android">TRACE;ANDROID</Platform>
+      <Platform Name="iOS">IOS</Platform>
+      <Platform Name="Linux">TRACE;LINUX</Platform>
+      <Platform Name="MacOS">MONOMAC</Platform>
+      <Platform Name="Windows">TRACE;WINDOWS</Platform>
+    </CustomDefinitions>
+  </Properties>
+  <Files>
+    <Compile Include="DecoderOutput.cs" />
+	<Compile Include="DecoderParameter.cs" />
+    <Compile Include="IDecoder.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </Files>
+</Project>
