@@ -15,7 +15,7 @@ Add references to
 1. LabNationInterfaces (Solution > Projects)
 2. System.ComponentModel.Composition (Assemblies)
 
-Write your silly decoder
+Write your decoder
 
 ```csharp
 using System;
