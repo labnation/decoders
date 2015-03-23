@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.ComponentModel.Composition;
+    using System.Diagnostics;
     using System.Linq;
 
     using LabNation.Interfaces;
@@ -52,10 +53,11 @@
                                InputWaveformTypes = new Dictionary<string, Type> { { "UART", typeof(float) } },
                                Parameters = new DecoderParameter[]
                                        {
-                                           new DecoderParamaterInts("Baudrate", new[] { 75, 110, 300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200 }, "bits per second", 1200, "Bits per second (baudrate)."),
+                                           new DecoderParamaterInts("Baudrate", new[] { 75, 110, 300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200 }, "bits per second", 9600, "Bits per second (baudrate)."),
                                            new DecoderParamaterInts("Databits", new[] { 7, 8 }, "Databits", 8, "Data bits."),
                                            new DecoderParamaterStrings("Parity", new[] { "Even", "Odd", "None", "Mark", "Space" }, "None", "Parity."),
-                                           new DecoderParamaterInts("Stopbits", new[] { 1, 2 }, "Stopbits", 1, "stop bit setting.")
+                                           new DecoderParamaterInts("Stopbits", new[] { 1, 2 }, "Stopbits", 1, "stop bit setting."),
+                                           new DecoderParamaterStrings("Mode", new[] { "UART", "RS232" }, "RS232", "Select if the signal needs to be inverted.")
                                        }
                            };
             }
@@ -68,10 +70,14 @@
         /// <param name="parameters"> The parameters. </param>
         /// <param name="samplePeriod"> The sample period. </param>
         /// <returns> The output returned to the scope. </returns>
-        public DecoderOutput[] Decode(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod)
+        public DecoderOutput[] Decode(
+            Dictionary<string, Array> inputWaveforms,
+            Dictionary<string, object> parameters,
+            double samplePeriod)
         {
             //// Todo fix startbit, reposition startbit. Current version can not handle a lot of data.
-            
+            var decoderOutputList = new List<DecoderOutput>();
+
             //// Get samples.
             var serialData = (float[])inputWaveforms["UART"];
 
@@ -80,10 +86,8 @@
             var selectedDatabits = (int)parameters["Databits"];
             var selectedParity = (string)parameters["Parity"];
             var selectedStopbits = (int)parameters["Stopbits"];
-
-            //// Bit length in msec.
-            var bitlength = 1000.0 / selectedBaudrate;
-            var clockTime = bitlength / (samplePeriod * 1000);
+            var selectedMode = (string)parameters["Mode"];
+            bool inverted = selectedMode == "UART";
 
             //// Sort values.
             var dic = new Dictionary<float, int>();
@@ -116,35 +120,107 @@
                 }
             }
 
+            if (Math.Abs(min - float.MaxValue) < 0.01 || Math.Abs(max - float.MinValue) < 0.01)
+            {
+                return decoderOutputList.ToArray();
+            }
+
             //// Calc Low High threshold, this way we can handle almost all signal levels.
             var th = (max - min) / 4;
             float maxth = max - th;
             float minth = min + th;
+
             var val = Bitvalue.Unknown;
+
+            //// Bit length in msec.
+            double bitlength;
+
+            if (selectedBaudrate != 0)
+            {
+                bitlength = 1000.0 / selectedBaudrate;
+            }
+            else
+            {
+                int indexSignalUp = -1;
+                int indexSignalDown = -1;
+                int minimumDelta = int.MaxValue;
+
+                //// Get bit length.
+                for (int i = 0; i < serialData.Length - 1; i++)
+                {
+                    if (serialData[i] > maxth && serialData[i + 1] < minth)
+                    {
+                        indexSignalDown = i;
+                    }
+
+                    if (serialData[i] < minth && serialData[i + 1] > maxth)
+                    {
+                        indexSignalUp = i;
+                    }
+
+                    if (indexSignalDown != indexSignalUp)
+                    {
+                        var d = Math.Abs(indexSignalDown - indexSignalUp);
+                        if (d < minimumDelta)
+                        {
+                            minimumDelta = d;
+                        }
+                    }
+                }
+
+                bitlength = minimumDelta * samplePeriod * 1000;
+                Debug.WriteLine("Minimum delta = {0} msec", bitlength);
+            }
+
+            var clockTime = bitlength / (samplePeriod * 1000);
+            if (clockTime < 1)
+            {
+                clockTime = 1;
+            }
 
             //// Find startbit.
             int startIndex = 0;
             for (int i = 0; i < serialData.Length; i++)
             {
-                if (serialData[i] > maxth)
+                if (inverted)
                 {
-                    if (val == Bitvalue.Low)
+                    if (serialData[i] < minth)
                     {
-                        //// Start detected, start decoding.
-                        startIndex = i;
-                        break;
-                    }
+                        if (val == Bitvalue.High)
+                        {
+                            //// Start detected, start decoding. (High -> Low)
+                            startIndex = i;
+                            break;
+                        }
 
-                    val = Bitvalue.High;
+                        val = Bitvalue.Low;
+                    }
+                    else if (serialData[i] > maxth)
+                    {
+                        val = Bitvalue.High;
+                    }
                 }
-                else if (serialData[i] < minth)
+                else
                 {
-                    val = Bitvalue.Low;
+                    if (serialData[i] > maxth)
+                    {
+                        if (val == Bitvalue.Low)
+                        {
+                            //// Start detected, start decoding. (Low -> High)
+                            startIndex = i;
+                            break;
+                        }
+
+                        val = Bitvalue.High;
+                    }
+                    else if (serialData[i] < minth)
+                    {
+                        val = Bitvalue.Low;
+                    }
                 }
             }
 
             int pointer = startIndex + (int)(clockTime / 2.0);
-            var decoderOutputList = new List<DecoderOutput>();
             int lastPointer = pointer;
             bool colorToggle = false;
 
@@ -160,18 +236,19 @@
                 {
                     if (pointer < serialData.Length)
                     {
-                        if (serialData[pointer] > maxth)
+                        if (inverted)
                         {
-                            // Debug.WriteLine("index = {0}, 0", pointer);
-                            // decoderOutputList.Add(new DecoderOutputEvent(lastPointer + (int)(clockTime / 2.0), pointer + (int)(clockTime / 2.0), DecoderOutputColor.Red, "0"));
-                            // lastPointer = pointer;
+                            if (serialData[pointer] > maxth)
+                            {
+                                data += add;
+                            }
                         }
-                        else if (serialData[pointer] < minth)
+                        else
                         {
-                            // Debug.WriteLine("index = {0}, 1", pointer);
-                            // decoderOutputList.Add(new DecoderOutputEvent(lastPointer + (int)(clockTime / 2.0), pointer + (int)(clockTime / 2.0), DecoderOutputColor.Blue, "1"));
-                            // lastPointer = pointer;
-                            data += add;
+                            if (serialData[pointer] < minth)
+                            {
+                                data += add;
+                            }
                         }
                     }
 
@@ -182,13 +259,12 @@
                 //// Skip stop bit.
                 pointer += (int)clockTime;
 
-                if (data > 33 && data < 255)
+                if (pointer < serialData.Length)
                 {
-                    var text = string.Format("0x{0:X} ({1})", data, Convert.ToChar(data));
                     decoderOutputList.Add(
                         colorToggle
-                            ? new DecoderOutputEvent(lastPointer, pointer, DecoderOutputColor.Red, text)
-                            : new DecoderOutputEvent(lastPointer, pointer, DecoderOutputColor.Blue, text));
+                            ? new DecoderOutputValue<byte>(lastPointer, pointer, DecoderOutputColor.Red, (byte)data, string.Empty)
+                            : new DecoderOutputValue<byte>(lastPointer, pointer, DecoderOutputColor.Blue, (byte)data, string.Empty));
                     lastPointer = pointer;
                     colorToggle = !colorToggle;
                 }
