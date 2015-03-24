@@ -46,14 +46,14 @@
                            {
                                Name = "Serial decoder",
                                ShortName = "UART",
-                               Author = "R.Dubber",
+                               Author = "robert44",
                                VersionMajor = 0,
                                VersionMinor = 1,
                                Description = "Serial decoder",
                                InputWaveformTypes = new Dictionary<string, Type> { { "UART", typeof(float) } },
                                Parameters = new DecoderParameter[]
                                        {
-                                           new DecoderParamaterInts("Baudrate", new[] { 75, 110, 300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200 }, "bits per second", 9600, "Bits per second (baudrate)."),
+                                           new DecoderParamaterInts("Baudrate", new[] { 0, 75, 110, 300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200 }, "bits per second", 0, "Bits per second (baudrate)."),
                                            new DecoderParamaterInts("Databits", new[] { 7, 8 }, "Databits", 8, "Data bits."),
                                            new DecoderParamaterStrings("Parity", new[] { "Even", "Odd", "None", "Mark", "Space" }, "None", "Parity."),
                                            new DecoderParamaterInts("Stopbits", new[] { 1, 2 }, "Stopbits", 1, "stop bit setting."),
@@ -133,46 +133,89 @@
             var val = Bitvalue.Unknown;
 
             //// Bit length in msec.
-            double bitlength;
+            double averageBitlength;
 
             if (selectedBaudrate != 0)
             {
-                bitlength = 1000.0 / selectedBaudrate;
+                averageBitlength = 1000.0 / selectedBaudrate;
             }
             else
             {
                 int indexSignalUp = -1;
                 int indexSignalDown = -1;
-                int minimumDelta = int.MaxValue;
+                var bitlengths = new Dictionary<double, int>();
 
                 //// Get bit length.
                 for (int i = 0; i < serialData.Length - 1; i++)
                 {
-                    if (serialData[i] > maxth && serialData[i + 1] < minth)
+                    if (serialData[i] > maxth)
                     {
-                        indexSignalDown = i;
-                    }
-
-                    if (serialData[i] < minth && serialData[i + 1] > maxth)
-                    {
-                        indexSignalUp = i;
-                    }
-
-                    if (indexSignalDown != indexSignalUp)
-                    {
-                        var d = Math.Abs(indexSignalDown - indexSignalUp);
-                        if (d < minimumDelta)
+                        if (indexSignalDown == -1)
                         {
-                            minimumDelta = d;
+                            indexSignalDown = i;
+                        }
+
+                        if (indexSignalUp != -1)
+                        {
+                            double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
+                            if (bitlengths.ContainsKey(bitlength))
+                            {
+                                bitlengths[bitlength]++;
+                            }
+                            else
+                            {
+                                bitlengths.Add(bitlength, 1);
+                            }
+
+                            indexSignalUp = -1;
+                            Debug.WriteLine("bitlength L-H = {0}", bitlength);
+                        }
+                    }
+
+                    if (serialData[i] < minth)
+                    {
+                        if (indexSignalUp == -1)
+                        {
+                            indexSignalUp = i;
+                        }
+
+                        if (indexSignalDown != -1)
+                        {
+                            double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
+                            if (bitlengths.ContainsKey(bitlength))
+                            {
+                                bitlengths[bitlength]++;
+                            }
+                            else
+                            {
+                                bitlengths.Add(bitlength, 1);
+                            }
+
+                            indexSignalDown = -1;
+                            Debug.WriteLine("bitlength H-L = {0}", bitlength);
                         }
                     }
                 }
 
-                bitlength = minimumDelta * samplePeriod * 1000;
-                Debug.WriteLine("Minimum delta = {0} msec", bitlength);
+                averageBitlength = double.MaxValue;
+                foreach (var bitlength in bitlengths)
+                {
+                    if (bitlength.Key < averageBitlength && bitlength.Value > 2)
+                    {
+                        averageBitlength = bitlength.Key;
+                    }
+                }
+
+                Debug.WriteLine("Minimum delta = {0} msec", averageBitlength);
             }
 
-            var clockTime = bitlength / (samplePeriod * 1000);
+            if (Math.Abs(averageBitlength - double.MaxValue) < 0.1)
+            {
+                // possible show error in detecting baudrate.
+                return decoderOutputList.ToArray();
+            }
+
+            var clockTime = averageBitlength / (samplePeriod * 1000);
             if (clockTime < 1)
             {
                 clockTime = 1;
@@ -269,7 +312,7 @@
                     colorToggle = !colorToggle;
                 }
             }
-
+ 
             //// Todo get parity.
             return decoderOutputList.ToArray();
         }
