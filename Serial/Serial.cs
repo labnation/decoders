@@ -5,6 +5,7 @@
     using System.ComponentModel.Composition;
     using System.Diagnostics;
     using System.Linq;
+    using System.Text;
 
     using LabNation.Interfaces;
 
@@ -14,27 +15,6 @@
     [Export(typeof(IDecoder))]
     public class Serial : IDecoder
     {
-        /// <summary>
-        /// The bit value.
-        /// </summary>
-        private enum Bitvalue
-        {
-            /// <summary>
-            /// The unknown.
-            /// </summary>
-            Unknown,
-
-            /// <summary>
-            /// The high value.
-            /// </summary>
-            High,
-
-            /// <summary>
-            /// The low value.
-            /// </summary>
-            Low
-        }
-
         /// <summary>
         /// Gets the description.
         /// </summary>
@@ -130,191 +110,147 @@
             float maxth = max - th;
             float minth = min + th;
 
-            var val = Bitvalue.Unknown;
+            int indexSignalUp = -1;
+            int indexSignalDown = -1;
+            var bits = new List<Bit>();
 
-            //// Bit length in msec.
-            double averageBitlength;
-
-            if (selectedBaudrate != 0)
+            //// Get bit length.
+            for (int i = 0; i < serialData.Length - 1; i++)
             {
-                averageBitlength = 1000.0 / selectedBaudrate;
-            }
-            else
-            {
-                int indexSignalUp = -1;
-                int indexSignalDown = -1;
-                var bitlengths = new Dictionary<double, int>();
-
-                //// Get bit length.
-                for (int i = 0; i < serialData.Length - 1; i++)
+                if (serialData[i] > maxth)
                 {
-                    if (serialData[i] > maxth)
+                    if (indexSignalDown == -1)
                     {
-                        if (indexSignalDown == -1)
-                        {
-                            indexSignalDown = i;
-                        }
-
-                        if (indexSignalUp != -1)
-                        {
-                            double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
-                            if (bitlengths.ContainsKey(bitlength))
-                            {
-                                bitlengths[bitlength]++;
-                            }
-                            else
-                            {
-                                bitlengths.Add(bitlength, 1);
-                            }
-
-                            indexSignalUp = -1;
-                            Debug.WriteLine("bitlength L-H = {0}", bitlength);
-                        }
+                        indexSignalDown = i;
                     }
 
-                    if (serialData[i] < minth)
+                    if (indexSignalUp != -1)
                     {
-                        if (indexSignalUp == -1)
-                        {
-                            indexSignalUp = i;
-                        }
-
-                        if (indexSignalDown != -1)
-                        {
-                            double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
-                            if (bitlengths.ContainsKey(bitlength))
-                            {
-                                bitlengths[bitlength]++;
-                            }
-                            else
-                            {
-                                bitlengths.Add(bitlength, 1);
-                            }
-
-                            indexSignalDown = -1;
-                            Debug.WriteLine("bitlength H-L = {0}", bitlength);
-                        }
+                        double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
+                        indexSignalUp = -1;
+                        bits.Add(inverted ? new Bit(i, bitlength, 0) : new Bit(i, bitlength, 1));
+                        // Debug.WriteLine("bitlength L-H = {0} , index = {1}", bitlength, i);
                     }
                 }
 
-                averageBitlength = double.MaxValue;
-                foreach (var bitlength in bitlengths)
+                if (serialData[i] < minth)
                 {
-                    if (bitlength.Key < averageBitlength && bitlength.Value > 2)
+                    if (indexSignalUp == -1)
                     {
-                        averageBitlength = bitlength.Key;
+                        indexSignalUp = i;
+                    }
+
+                    if (indexSignalDown != -1)
+                    {
+                        double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
+                        indexSignalDown = -1;
+                        bits.Add(inverted ? new Bit(i, bitlength, 1) : new Bit(i, bitlength, 0));
+                        // Debug.WriteLine("bitlength H-L = {0}, index = {1}", bitlength,  i);
                     }
                 }
-
-                Debug.WriteLine("Minimum delta = {0} msec", averageBitlength);
             }
 
-            if (Math.Abs(averageBitlength - double.MaxValue) < 0.1)
+            //// Minimum bit length in msec.
+            double minimumBitlength = bits.Select(bit => bit.Length).Concat(new[] { double.MaxValue }).Min();
+            Debug.WriteLine("Minimum bit length = {0} msec", minimumBitlength);
+
+            if (Math.Abs(minimumBitlength - double.MaxValue) < 0.1)
             {
                 // possible show error in detecting baudrate.
                 return decoderOutputList.ToArray();
             }
 
-            var clockTime = averageBitlength / (samplePeriod * 1000);
-            if (clockTime < 1)
+            var resultBits = new List<Bit>();
+            int indexstep = (int)(minimumBitlength / (1000.0 * samplePeriod));
+            
+            var bitstring = new StringBuilder();
+
+            for (int idx = 0; idx < bits.Count; idx++)
             {
-                clockTime = 1;
-            }
-
-            //// Find startbit.
-            int startIndex = 0;
-            for (int i = 0; i < serialData.Length; i++)
-            {
-                if (inverted)
+                var count = (int)(bits[idx].Length / minimumBitlength);
+                if (count < (1 + selectedDatabits + 1))
                 {
-                    if (serialData[i] < minth)
+                    for (var i = 0; i < count; i++)
                     {
-                        if (val == Bitvalue.High)
-                        {
-                            //// Start detected, start decoding. (High -> Low)
-                            startIndex = i;
-                            break;
-                        }
-
-                        val = Bitvalue.Low;
-                    }
-                    else if (serialData[i] > maxth)
-                    {
-                        val = Bitvalue.High;
-                    }
-                }
-                else
-                {
-                    if (serialData[i] > maxth)
-                    {
-                        if (val == Bitvalue.Low)
-                        {
-                            //// Start detected, start decoding. (Low -> High)
-                            startIndex = i;
-                            break;
-                        }
-
-                        val = Bitvalue.High;
-                    }
-                    else if (serialData[i] < minth)
-                    {
-                        val = Bitvalue.Low;
+                        resultBits.Add(new Bit(bits[idx].Index + (i * indexstep), indexstep, bits[idx].Value));
+                        bitstring.Append(bits[idx].Value == 1 ? "1" : "0");
                     }
                 }
             }
 
-            int pointer = startIndex + (int)(clockTime / 2.0);
-            int lastPointer = pointer;
-            bool colorToggle = false;
+            resultBits.Add(new Bit(bits[bits.Count - 1].Index + indexstep, indexstep, 1));
 
-            //// Get data bits.
-            while ((pointer + (int)clockTime) < serialData.Length)
+    //Debug.WriteLine("Result bits.");
+    //foreach (var resultBit in resultBits)
+    //{
+    //    Debug.WriteLine("Index= {0}, Length= {1}, Value= {2}", resultBit.Index, resultBit.Length, resultBit.Value);
+    //}
+
+            var bitstr = bitstring.ToString();
+            var bitstream = bitstr.Substring(bitstr.IndexOf('0')) + "1";    // Add end bit
+            
+            // Debug.WriteLine(bitstream);
+
+            for (int i = 0; i < bitstream.Length; i += 1 + selectedDatabits + 1)
             {
-                // Start bit
-                pointer += (int)clockTime;
-
-                var data = 0;
-                var add = 1;
-                for (int i = 0; i < selectedDatabits; i++)
+                if (i + selectedDatabits + 1 < bitstream.Length)
                 {
-                    if (pointer < serialData.Length)
+                    if (bitstream[i] == '0' && bitstream[i + selectedDatabits + 1] == '1')
                     {
-                        if (inverted)
-                        {
-                            if (serialData[pointer] > maxth)
-                            {
-                                data += add;
-                            }
-                        }
-                        else
-                        {
-                            if (serialData[pointer] < minth)
-                            {
-                                data += add;
-                            }
-                        }
+                        // Start and stop bit found.
+                        var databits = bitstream.Substring(i + 1, selectedDatabits).ToCharArray();
+                        Array.Reverse(databits);
+                        byte data = Convert.ToByte(new string(databits), 2);
+                        decoderOutputList.Add(
+                            new DecoderOutputValue<byte>(
+                                resultBits[i].Index,
+                                resultBits[i + selectedDatabits + 1].Index,
+                                DecoderOutputColor.Red,
+                                data,
+                                string.Empty));
                     }
-
-                    pointer += (int)clockTime;
-                    add *= 2;
-                }
-
-                //// Skip stop bit.
-                pointer += (int)clockTime;
-
-                if (pointer < serialData.Length)
-                {
-                    decoderOutputList.Add(
-                        colorToggle
-                            ? new DecoderOutputValue<byte>(lastPointer, pointer, DecoderOutputColor.Red, (byte)data, string.Empty)
-                            : new DecoderOutputValue<byte>(lastPointer, pointer, DecoderOutputColor.Blue, (byte)data, string.Empty));
-                    lastPointer = pointer;
-                    colorToggle = !colorToggle;
                 }
             }
- 
-            //// Todo get parity.
+
+            double baudrate = 1.0 / (minimumBitlength / 1000.0);
+            Debug.WriteLine("Detected: {0} baud.", (int)baudrate);
+
+            ////// Todo get parity.
             return decoderOutputList.ToArray();
+        }
+
+        /// <summary>
+        /// The bit.
+        /// </summary>
+        private class Bit
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Bit"/> class.
+            /// </summary>
+            /// <param name="index"> The index. </param>
+            /// <param name="length"> The length. </param>
+            /// <param name="val"> The val. </param>
+            public Bit(int index, double length, int val)
+            {
+                this.Index = index;
+                this.Value = val;
+                this.Length = length;
+            }
+
+            /// <summary>
+            /// Gets the index.
+            /// </summary>
+            public int Index { get; private set; }
+
+            /// <summary>
+            /// Gets the value.
+            /// </summary>
+            public int Value { get; private set; }
+
+            /// <summary>
+            /// Gets the length.
+            /// </summary>
+            public double Length { get; private set; }
         }
     }
 }
