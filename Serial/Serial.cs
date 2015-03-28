@@ -35,7 +35,7 @@
                                        {
                                            new DecoderParamaterInts("Baudrate", new[] { 0, 75, 110, 300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200 }, "bits per second", 0, "Bits per second (baudrate)."),
                                            new DecoderParamaterInts("Databits", new[] { 7, 8 }, "Databits", 8, "Data bits."),
-                                           new DecoderParamaterStrings("Parity", new[] { "Even", "Odd", "None", "Mark", "Space" }, "None", "Parity."),
+                                           new DecoderParamaterStrings("Parity", new[] { "None", "Odd", "Even", "Mark", "Space" }, "None", "Parity."),
                                            new DecoderParamaterInts("Stopbits", new[] { 1, 2 }, "Stopbits", 1, "stop bit setting."),
                                            new DecoderParamaterStrings("Mode", new[] { "UART", "RS232" }, "RS232", "Select if the signal needs to be inverted.")
                                        }
@@ -50,172 +50,167 @@
         /// <param name="parameters"> The parameters. </param>
         /// <param name="samplePeriod"> The sample period. </param>
         /// <returns> The output returned to the scope. </returns>
-        public DecoderOutput[] Decode(
-            Dictionary<string, Array> inputWaveforms,
-            Dictionary<string, object> parameters,
-            double samplePeriod)
+        public DecoderOutput[] Decode(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod)
         {
-            //// Todo fix startbit, reposition startbit. Current version can not handle a lot of data.
+			// TODO: add parity.
             var decoderOutputList = new List<DecoderOutput>();
 
-            //// Get samples.
-            var serialData = (float[])inputWaveforms["UART"];
-
-            //// Fetch parameters.
-            var selectedBaudrate = (int)parameters["Baudrate"];
-            var selectedDatabits = (int)parameters["Databits"];
-            var selectedParity = (string)parameters["Parity"];
-            var selectedStopbits = (int)parameters["Stopbits"];
-            var selectedMode = (string)parameters["Mode"];
-            bool inverted = selectedMode == "UART";
-
-            //// Sort values.
-            var dic = new Dictionary<float, int>();
-            foreach (var f in serialData)
+            try
             {
-                if (dic.ContainsKey(f))
+                //// Get samples.
+                var serialData = (float[])inputWaveforms["UART"];
+
+                //// Fetch parameters.
+                var selectedBaudrate = (int)parameters["Baudrate"];
+                var selectedDatabits = (int)parameters["Databits"];
+                var selectedParity = (string)parameters["Parity"];
+                var selectedStopbits = (int)parameters["Stopbits"];
+                var selectedMode = (string)parameters["Mode"];
+                bool inverted = selectedMode == "UART";
+
+                int frameLength = 1 + selectedDatabits + selectedStopbits;
+
+                //// Sort values.
+                var dic = new Dictionary<float, int>();
+                foreach (var f in serialData)
                 {
-                    dic[f]++;
-                }
-                else
-                {
-                    dic.Add(f, 1);
-                }
-            }
-
-            float min = float.MaxValue;
-            float max = float.MinValue;
-
-            //// Take Min Max value.
-            foreach (var i in dic.Where(i => i.Value > 50))
-            {
-                if (i.Key < min)
-                {
-                    min = i.Key;
-                }
-
-                if (i.Key > max)
-                {
-                    max = i.Key;
-                }
-            }
-
-            if (Math.Abs(min - float.MaxValue) < 0.01 || Math.Abs(max - float.MinValue) < 0.01)
-            {
-                return decoderOutputList.ToArray();
-            }
-
-            //// Calc Low High threshold, this way we can handle almost all signal levels.
-            var th = (max - min) / 4;
-            float maxth = max - th;
-            float minth = min + th;
-
-            int indexSignalUp = -1;
-            int indexSignalDown = -1;
-            var bits = new List<Bit>();
-
-            //// Get bit length.
-            for (int i = 0; i < serialData.Length - 1; i++)
-            {
-                if (serialData[i] > maxth)
-                {
-                    if (indexSignalDown == -1)
+                    if (dic.ContainsKey(f))
                     {
-                        indexSignalDown = i;
+                        dic[f]++;
                     }
-
-                    if (indexSignalUp != -1)
+                    else
                     {
-                        double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
-                        indexSignalUp = -1;
-                        bits.Add(inverted ? new Bit(i, bitlength, 0) : new Bit(i, bitlength, 1));
-                        // Debug.WriteLine("bitlength L-H = {0} , index = {1}", bitlength, i);
+                        dic.Add(f, 1);
                     }
                 }
 
-                if (serialData[i] < minth)
+                float min = float.MaxValue;
+                float max = float.MinValue;
+
+                //// Take Min Max value.
+                foreach (var i in dic.Where(i => i.Value > 50))
                 {
-                    if (indexSignalUp == -1)
+                    if (i.Key < min)
                     {
-                        indexSignalUp = i;
+                        min = i.Key;
                     }
 
-                    if (indexSignalDown != -1)
+                    if (i.Key > max)
                     {
-                        double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
-                        indexSignalDown = -1;
-                        bits.Add(inverted ? new Bit(i, bitlength, 1) : new Bit(i, bitlength, 0));
-                        // Debug.WriteLine("bitlength H-L = {0}, index = {1}", bitlength,  i);
+                        max = i.Key;
                     }
                 }
-            }
 
-            //// Minimum bit length in msec.
-            double minimumBitlength = bits.Select(bit => bit.Length).Concat(new[] { double.MaxValue }).Min();
-            Debug.WriteLine("Minimum bit length = {0} msec", minimumBitlength);
-
-            if (Math.Abs(minimumBitlength - double.MaxValue) < 0.1)
-            {
-                // possible show error in detecting baudrate.
-                return decoderOutputList.ToArray();
-            }
-
-            var resultBits = new List<Bit>();
-            int indexstep = (int)(minimumBitlength / (1000.0 * samplePeriod));
-            
-            var bitstring = new StringBuilder();
-
-            for (int idx = 0; idx < bits.Count; idx++)
-            {
-                var count = (int)(bits[idx].Length / minimumBitlength);
-                if (count < (1 + selectedDatabits + 1))
+                if (Math.Abs(min - float.MaxValue) < 0.01 || Math.Abs(max - float.MinValue) < 0.01)
                 {
-                    for (var i = 0; i < count; i++)
+                    return decoderOutputList.ToArray();
+                }
+
+                //// Calc Low High threshold, this way we can handle almost all signal levels.
+                var th = (max - min) / 4;
+                float maxth = max - th;
+                float minth = min + th;
+
+                int indexSignalUp = -1;
+                int indexSignalDown = -1;
+                var bits = new List<Bit>();
+
+                //// Get bit length.
+                for (int i = 0; i < serialData.Length - 1; i++)
+                {
+                    if (serialData[i] > maxth)
                     {
-                        resultBits.Add(new Bit(bits[idx].Index + (i * indexstep), indexstep, bits[idx].Value));
-                        bitstring.Append(bits[idx].Value == 1 ? "1" : "0");
+                        if (indexSignalDown == -1)
+                        {
+                            indexSignalDown = i;
+                        }
+
+                        if (indexSignalUp != -1)
+                        {
+                            double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
+                            indexSignalUp = -1;
+                            bits.Add(inverted ? new Bit(i, bitlength, 0) : new Bit(i, bitlength, 1));
+                            // Debug.WriteLine("bitlength L-H = {0} , index = {1}", bitlength, i);
+                        }
+                    }
+
+                    if (serialData[i] < minth)
+                    {
+                        if (indexSignalUp == -1)
+                        {
+                            indexSignalUp = i;
+                        }
+
+                        if (indexSignalDown != -1)
+                        {
+                            double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
+                            indexSignalDown = -1;
+                            bits.Add(inverted ? new Bit(i, bitlength, 1) : new Bit(i, bitlength, 0));
+                            // Debug.WriteLine("bitlength H-L = {0}, index = {1}", bitlength, i);
+                        }
                     }
                 }
-            }
 
-            resultBits.Add(new Bit(bits[bits.Count - 1].Index + indexstep, indexstep, 1));
+                //// Minimum bit length in msec.
+                double minimumBitlength = bits.Select(bit => bit.Length).Concat(new[] { double.MaxValue }).Min();
+                // Debug.WriteLine("Minimum bit length = {0} msec", minimumBitlength);
 
-    //Debug.WriteLine("Result bits.");
-    //foreach (var resultBit in resultBits)
-    //{
-    //    Debug.WriteLine("Index= {0}, Length= {1}, Value= {2}", resultBit.Index, resultBit.Length, resultBit.Value);
-    //}
-
-            var bitstr = bitstring.ToString();
-            var bitstream = bitstr.Substring(bitstr.IndexOf('0')) + "1";    // Add end bit
-            
-            // Debug.WriteLine(bitstream);
-
-            for (int i = 0; i < bitstream.Length; i += 1 + selectedDatabits + 1)
-            {
-                if (i + selectedDatabits + 1 < bitstream.Length)
+                if (Math.Abs(minimumBitlength - double.MaxValue) < 0.1)
                 {
-                    if (bitstream[i] == '0' && bitstream[i + selectedDatabits + 1] == '1')
+                    // possible show error in detecting baudrate.
+                    return decoderOutputList.ToArray();
+                }
+
+                var resultBits = new List<Bit>();
+                int indexstep = (int)(minimumBitlength / (1000.0 * samplePeriod));
+                var bitstring = new StringBuilder();
+
+                foreach (Bit bit in bits)
+                {
+                    var count = (int)(bit.Length / minimumBitlength);
+                    if (count < (1 + selectedDatabits + 1))
                     {
-                        // Start and stop bit found.
-                        var databits = bitstream.Substring(i + 1, selectedDatabits).ToCharArray();
-                        Array.Reverse(databits);
-                        byte data = Convert.ToByte(new string(databits), 2);
-                        decoderOutputList.Add(
-                            new DecoderOutputValue<byte>(
-                                resultBits[i].Index,
-                                resultBits[i + selectedDatabits + 1].Index,
-                                DecoderOutputColor.Red,
-                                data,
-                                string.Empty));
+                        for (var i = 0; i < count; i++)
+                        {
+                            resultBits.Add(new Bit(bit.Index + (i * indexstep), indexstep, bit.Value));
+                            bitstring.Append(bit.Value == 1 ? "1" : "0");
+                        }
                     }
                 }
+
+                resultBits.Add(new Bit(bits[bits.Count - 1].Index + indexstep, indexstep, 1));
+                var bitstr = bitstring.ToString();
+                var bitstream = bitstr.Substring(bitstr.IndexOf('0')) + "1"; // Add end bit
+
+                Debug.WriteLine(bitstream);
+                for (int i = 0; i < bitstream.Length; i += frameLength)
+                {
+                    if (i + selectedDatabits + selectedStopbits < bitstream.Length)
+                    {
+                        // Find start and stop bit.
+                        if (bitstream[i] == '0' && bitstream[i + selectedDatabits + selectedStopbits] == '1')
+                        {
+                            if ((selectedStopbits == 1) | ((selectedStopbits == 2) && bitstream[i + selectedDatabits + 1] == '1'))
+                            {
+                                var databits = bitstream.Substring(i + 1, selectedDatabits).ToCharArray();
+                                Array.Reverse(databits);
+                                byte data = Convert.ToByte(new string(databits), 2);
+                                decoderOutputList.Add(new DecoderOutputValue<byte>(resultBits[i].Index, resultBits[i + selectedDatabits + selectedStopbits].Index, DecoderOutputColor.Red, data, string.Empty));
+                            }
+                        }
+                    }
+                }
+
+                double baudrate = 1.0 / (minimumBitlength / 1000.0);
+                Debug.WriteLine("Detected: {0} baud.", (int)baudrate);
+
+                ////// Todo get parity.
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
             }
 
-            double baudrate = 1.0 / (minimumBitlength / 1000.0);
-            Debug.WriteLine("Detected: {0} baud.", (int)baudrate);
-
-            ////// Todo get parity.
             return decoderOutputList.ToArray();
         }
 
