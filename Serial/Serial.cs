@@ -33,7 +33,7 @@
                                InputWaveformTypes = new Dictionary<string, Type> { { "UART", typeof(float) } },
                                Parameters = new DecoderParameter[]
                                        {
-                                           new DecoderParamaterInts("Baudrate", new[] { 0, 75, 110, 300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200 }, "bits per second", 0, "Bits per second (baudrate)."),
+                                           // new DecoderParamaterInts("Baudrate", new[] { 0, 75, 110, 300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200 }, "bits per second", 0, "Bits per second (baudrate)."),
                                            new DecoderParamaterInts("Databits", new[] { 7, 8 }, "Databits", 8, "Data bits."),
                                            new DecoderParamaterStrings("Parity", new[] { "None", "Odd", "Even", "Mark", "Space" }, "None", "Parity."),
                                            new DecoderParamaterInts("Stopbits", new[] { 1, 2 }, "Stopbits", 1, "stop bit setting."),
@@ -52,7 +52,6 @@
         /// <returns> The output returned to the scope. </returns>
         public DecoderOutput[] Decode(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod)
         {
-			// TODO: add parity.
             var decoderOutputList = new List<DecoderOutput>();
 
             try
@@ -61,14 +60,39 @@
                 var serialData = (float[])inputWaveforms["UART"];
 
                 //// Fetch parameters.
-                var selectedBaudrate = (int)parameters["Baudrate"];
+                //// var selectedBaudrate = (int)parameters["Baudrate"];
                 var selectedDatabits = (int)parameters["Databits"];
-                var selectedParity = (string)parameters["Parity"];
                 var selectedStopbits = (int)parameters["Stopbits"];
                 var selectedMode = (string)parameters["Mode"];
                 bool inverted = selectedMode == "UART";
 
-                int frameLength = 1 + selectedDatabits + selectedStopbits;
+                int parityLength;
+                Parity parity;
+                switch ((string)parameters["Parity"])
+                {
+                    case "Odd":
+                        parity = Parity.Odd;
+                        parityLength = 1;
+                        break;
+                    case "Even":
+                        parity = Parity.Even;
+                        parityLength = 1;
+                        break;
+                    case "Mark":
+                        parity = Parity.Mark;
+                        parityLength = 1;
+                        break;
+                    case "Space":
+                        parity = Parity.Space;
+                        parityLength = 1;
+                        break;
+                    default:
+                        parity = Parity.None;
+                        parityLength = 0;
+                        break;
+                }
+
+                int frameLength = 1 + selectedDatabits + parityLength + selectedStopbits;
 
                 //// Sort values.
                 var dic = new Dictionary<float, int>();
@@ -130,7 +154,7 @@
                             double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
                             indexSignalUp = -1;
                             bits.Add(inverted ? new Bit(i, bitlength, 0) : new Bit(i, bitlength, 1));
-                            // Debug.WriteLine("bitlength L-H = {0} , index = {1}", bitlength, i);
+                            //// Debug.WriteLine("bitlength L-H = {0} , index = {1}", bitlength, i);
                         }
                     }
 
@@ -146,14 +170,14 @@
                             double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
                             indexSignalDown = -1;
                             bits.Add(inverted ? new Bit(i, bitlength, 1) : new Bit(i, bitlength, 0));
-                            // Debug.WriteLine("bitlength H-L = {0}, index = {1}", bitlength, i);
+                            //// Debug.WriteLine("bitlength H-L = {0}, index = {1}", bitlength, i);
                         }
                     }
                 }
 
                 //// Minimum bit length in msec.
                 double minimumBitlength = bits.Select(bit => bit.Length).Concat(new[] { double.MaxValue }).Min();
-                // Debug.WriteLine("Minimum bit length = {0} msec", minimumBitlength);
+                //// Debug.WriteLine("Minimum bit length = {0} msec", minimumBitlength);
 
                 if (Math.Abs(minimumBitlength - double.MaxValue) < 0.1)
                 {
@@ -182,20 +206,75 @@
                 var bitstr = bitstring.ToString();
                 var bitstream = bitstr.Substring(bitstr.IndexOf('0')) + "1"; // Add end bit
 
-                Debug.WriteLine(bitstream);
+                //// Debug.WriteLine(bitstream);
                 for (int i = 0; i < bitstream.Length; i += frameLength)
                 {
-                    if (i + selectedDatabits + selectedStopbits < bitstream.Length)
+                    if (i + selectedDatabits + parityLength + selectedStopbits < bitstream.Length)
                     {
                         // Find start and stop bit.
-                        if (bitstream[i] == '0' && bitstream[i + selectedDatabits + selectedStopbits] == '1')
+                        if (bitstream[i] == '0' && bitstream[i + selectedDatabits + parityLength + selectedStopbits] == '1')
                         {
-                            if ((selectedStopbits == 1) | ((selectedStopbits == 2) && bitstream[i + selectedDatabits + 1] == '1'))
+                            if ((selectedStopbits == 1) | ((selectedStopbits == 2) && bitstream[i + selectedDatabits + parityLength + 1] == '1'))
                             {
-                                var databits = bitstream.Substring(i + 1, selectedDatabits).ToCharArray();
-                                Array.Reverse(databits);
-                                byte data = Convert.ToByte(new string(databits), 2);
-                                decoderOutputList.Add(new DecoderOutputValue<byte>(resultBits[i].Index, resultBits[i + selectedDatabits + selectedStopbits].Index, DecoderOutputColor.Red, data, string.Empty));
+                                var databitsStr = bitstream.Substring(i + 1, selectedDatabits);
+
+                                bool parityOk = true;
+                                if (parity != Parity.None)
+                                {
+                                    int oneCount;
+                                    char parityBit = bitstream[i + selectedDatabits + 1];
+                                    switch (parity)
+                                    {
+                                        case Parity.Odd:
+                                            oneCount = databitsStr.Count(x => x == '1');
+                                            if (parityBit == '1')
+                                            {
+                                                oneCount++;
+                                            }
+
+                                            if (oneCount % 2 == 0)
+                                            {
+                                                parityOk = false;
+                                            }
+
+                                            break;
+                                        case Parity.Even:
+                                            oneCount = databitsStr.Count(x => x == '1');
+                                            if (parityBit == '1')
+                                            {
+                                                oneCount++;
+                                            }
+
+                                            if (oneCount % 2 == 1)
+                                            {
+                                                parityOk = false;
+                                            }
+
+                                            break;
+                                        case Parity.Mark:
+                                            if (parityBit != '1')
+                                            {
+                                                parityOk = false;
+                                            }
+
+                                            break;
+                                        case Parity.Space:
+                                            if (parityBit != '0')
+                                            {
+                                                parityOk = false;
+                                            }
+
+                                            break;
+                                    }
+                                }
+
+                                if (parityOk)
+                                {
+                                    var databits = databitsStr.ToCharArray();
+                                    Array.Reverse(databits);
+                                    byte data = Convert.ToByte(new string(databits), 2);
+                                    decoderOutputList.Add(new DecoderOutputValue<byte>(resultBits[i].Index, resultBits[i + selectedDatabits + selectedStopbits].Index, DecoderOutputColor.Red, data, string.Empty));
+                                }
                             }
                         }
                     }
@@ -203,8 +282,6 @@
 
                 double baudrate = 1.0 / (minimumBitlength / 1000.0);
                 Debug.WriteLine("Detected: {0} baud.", (int)baudrate);
-
-                ////// Todo get parity.
             }
             catch (Exception e)
             {
@@ -212,6 +289,18 @@
             }
 
             return decoderOutputList.ToArray();
+        }
+
+        /// <summary>
+        /// The parity.
+        /// </summary>
+        private enum Parity
+        {
+            None,
+            Odd,
+            Even,
+            Mark,
+            Space
         }
 
         /// <summary>
