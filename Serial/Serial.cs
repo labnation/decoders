@@ -33,7 +33,7 @@
                                InputWaveformTypes = new Dictionary<string, Type> { { "UART", typeof(float) } },
                                Parameters = new DecoderParameter[]
                                        {
-                                           // new DecoderParamaterInts("Baudrate", new[] { 0, 75, 110, 300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200 }, "bits per second", 0, "Bits per second (baudrate)."),
+                                           // new DecoderParamaterStrings("Baudrate", new[] { "Auto", "75", "110", "300", "1200", "2400", "4800", "9600", "14400", "19200", "28800", "38400", "57600", "115200" }, "Auto", "Bits per second (baudrate)."),
                                            new DecoderParamaterInts("Databits", new[] { 7, 8 }, "Databits", 8, "Data bits."),
                                            new DecoderParamaterStrings("Parity", new[] { "None", "Odd", "Even", "Mark", "Space" }, "None", "Parity."),
                                            new DecoderParamaterInts("Stopbits", new[] { 1, 2 }, "Stopbits", 1, "stop bit setting."),
@@ -60,7 +60,13 @@
                 var serialData = (float[])inputWaveforms["UART"];
 
                 //// Fetch parameters.
-                //// var selectedBaudrate = (int)parameters["Baudrate"];
+                int selectedBaudrate = 0;
+                var selectedBaudrateStr = "Auto"; // (string)parameters["Baudrate"];
+                if (selectedBaudrateStr != "Auto")
+                {
+                    int.TryParse(selectedBaudrateStr, out selectedBaudrate);
+                }
+                
                 var selectedDatabits = (int)parameters["Databits"];
                 var selectedStopbits = (int)parameters["Stopbits"];
                 var selectedMode = (string)parameters["Mode"];
@@ -139,7 +145,7 @@
                 int indexSignalDown = -1;
                 var bits = new List<Bit>();
 
-                //// Get bit length.
+                //// Get bit length from the smallest bit.
                 for (int i = 0; i < serialData.Length - 1; i++)
                 {
                     if (serialData[i] > maxth)
@@ -185,10 +191,16 @@
                     return decoderOutputList.ToArray();
                 }
 
+                if (selectedBaudrate != 0)                
+                {
+                    minimumBitlength = 1000.0 / selectedBaudrate;
+                }
+
                 var resultBits = new List<Bit>();
                 int indexstep = (int)(minimumBitlength / (1000.0 * samplePeriod));
                 var bitstring = new StringBuilder();
 
+                int indexOffset = bits[0].Index + indexstep;
                 foreach (Bit bit in bits)
                 {
                     var count = (int)(bit.Length / minimumBitlength);
@@ -196,17 +208,18 @@
                     {
                         for (var i = 0; i < count; i++)
                         {
-                            resultBits.Add(new Bit(bit.Index + (i * indexstep), indexstep, bit.Value));
+                            resultBits.Add(new Bit(indexOffset, indexstep, bit.Value));
                             bitstring.Append(bit.Value == 1 ? "1" : "0");
+                            indexOffset += indexstep;
                         }
                     }
                 }
 
                 resultBits.Add(new Bit(bits[bits.Count - 1].Index + indexstep, indexstep, 1));
                 var bitstr = bitstring.ToString();
-                var bitstream = bitstr.Substring(bitstr.IndexOf('0')) + "1"; // Add end bit
+                var bitstream = bitstr.Substring(bitstr.IndexOf('0')) + "1" + "1"; // Add end bit
 
-                //// Debug.WriteLine(bitstream);
+                Debug.WriteLine(bitstream);
                 for (int i = 0; i < bitstream.Length; i += frameLength)
                 {
                     if (i + selectedDatabits + parityLength + selectedStopbits < bitstream.Length)
@@ -219,10 +232,11 @@
                                 var databitsStr = bitstream.Substring(i + 1, selectedDatabits);
 
                                 bool parityOk = true;
+                                char parityBit = ' ';
                                 if (parity != Parity.None)
                                 {
                                     int oneCount;
-                                    char parityBit = bitstream[i + selectedDatabits + 1];
+                                    parityBit = bitstream[i + selectedDatabits + 1];
                                     switch (parity)
                                     {
                                         case Parity.Odd:
@@ -273,7 +287,17 @@
                                     var databits = databitsStr.ToCharArray();
                                     Array.Reverse(databits);
                                     byte data = Convert.ToByte(new string(databits), 2);
-                                    decoderOutputList.Add(new DecoderOutputValue<byte>(resultBits[i].Index, resultBits[i + selectedDatabits + selectedStopbits].Index, DecoderOutputColor.Red, data, string.Empty));
+                                    decoderOutputList.Add(new DecoderOutputEvent(resultBits[i].Index - indexstep, resultBits[i].Index, DecoderOutputColor.Orange, "START"));
+                                    decoderOutputList.Add(new DecoderOutputValue<byte>(resultBits[i].Index, resultBits[i].Index + (indexstep * selectedDatabits), DecoderOutputColor.Green, data, string.Empty));
+                                    int offset = 0;
+                                    if (parity != Parity.None)
+                                    {
+                                        string par = string.Format("P:{0}", parityBit);
+                                        decoderOutputList.Add(new DecoderOutputEvent(resultBits[i].Index + (indexstep * selectedDatabits), resultBits[i].Index + (indexstep * (selectedDatabits + 1)), DecoderOutputColor.DarkBlue, par));
+                                        offset++;
+                                    }
+
+                                    decoderOutputList.Add(new DecoderOutputEvent(resultBits[i].Index + (indexstep * (selectedDatabits + offset)), resultBits[i].Index + (indexstep * (selectedDatabits + 1 + offset)), DecoderOutputColor.Blue, "STOP"));
                                 }
                             }
                         }
@@ -335,6 +359,17 @@
             /// Gets the length.
             /// </summary>
             public double Length { get; private set; }
+
+            /// <summary>
+            /// The to string.
+            /// </summary>
+            /// <returns>
+            /// The <see cref="string"/>.
+            /// </returns>
+            public override string ToString()
+            {
+                return string.Format("{0},{1},{2}", this.Index, this.Length, this.Value);
+            }
         }
     }
 }
