@@ -33,7 +33,7 @@
                                InputWaveformTypes = new Dictionary<string, Type> { { "UART", typeof(float) } },
                                Parameters = new DecoderParameter[]
                                        {
-                                           // new DecoderParamaterStrings("Baudrate", new[] { "Auto", "75", "110", "300", "1200", "2400", "4800", "9600", "14400", "19200", "28800", "38400", "57600", "115200" }, "Auto", "Bits per second (baudrate)."),
+                                           new DecoderParamaterStrings("Baudrate", new[] { "Auto", "75", "110", "300", "1200", "2400", "4800", "9600", "14400", "19200", "28800", "38400", "57600", "115200" }, "Auto", "Bits per second (baudrate)."),
                                            new DecoderParamaterInts("Databits", new[] { 7, 8 }, "Databits", 8, "Data bits."),
                                            new DecoderParamaterStrings("Parity", new[] { "None", "Odd", "Even", "Mark", "Space" }, "None", "Parity."),
                                            new DecoderParamaterInts("Stopbits", new[] { 1, 2 }, "Stopbits", 1, "stop bit setting."),
@@ -61,7 +61,7 @@
 
                 //// Fetch parameters.
                 int selectedBaudrate = 0;
-                var selectedBaudrateStr = "Auto"; // (string)parameters["Baudrate"];
+                var selectedBaudrateStr = (string)parameters["Baudrate"];
                 if (selectedBaudrateStr != "Auto")
                 {
                     int.TryParse(selectedBaudrateStr, out selectedBaudrate);
@@ -203,7 +203,7 @@
                 int indexOffset = bits[0].Index + indexstep;
                 foreach (Bit bit in bits)
                 {
-                    var count = (int)(bit.Length / minimumBitlength);
+                    var count = (int)Math.Round(bit.Length / minimumBitlength);
                     if (count < (1 + selectedDatabits + 1))
                     {
                         for (var i = 0; i < count; i++)
