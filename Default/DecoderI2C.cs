@@ -44,46 +44,61 @@ namespace LabNation.Decoders
 
             //start of brute-force decoding
             bool i2cSequenceStarted = false;
+            bool startEventFired = false;
             bool addressDecoded = false;
             int bitCounter = 0;
             int startIndex = 0;
             byte decodedByte = 0;
+            bool read = false;
 
             for (int i = 1; i < SCLK.Length; i++)
             {
                 bool clockRisingEdge = SCLK[i] && !SCLK[i - 1];
                 bool clockFallingEdge = !SCLK[i] && SCLK[i - 1];
                 bool dataRisingEdge = SDIO[i] && !SDIO[i - 1];
-                bool dataFallingEdge = !SDIO[i] && SDIO[i - 1];
+                bool dataFallingEdge = !SDIO[i] && SDIO[i - 1];                
 
-                //Check for start/stop sequence
-                if (dataRisingEdge && SCLK[i])
+                //check for start sequence
+                if (dataFallingEdge && SCLK[i])
+                {                    
+                    i2cSequenceStarted = true;
+                    startEventFired = true;
+                    addressDecoded = false;
+                    bitCounter = 8;
+                    startIndex = i;
+                }
+                //Check for stop sequence
+                else if (dataRisingEdge && SCLK[i])
                 {
                     i2cSequenceStarted = false;
                     decoderOutputList.Add(new DecoderOutputEvent(startIndex, i, DecoderOutputColor.Orange, "P"));
-                    startIndex = i;
-                }
-                else if (dataFallingEdge && SCLK[i])
-                {                    
-                    //sadly this even has no 'length'... it's just an edge
-                    //it will be correctly for at the very end of this decoder as otherwise it wouldnt be visible
-                    decoderOutputList.Add(new DecoderOutputEvent(i, i, DecoderOutputColor.Green, "S"));
-                    i2cSequenceStarted = true;
-                    addressDecoded = false;
-                    bitCounter = 8;
                     startIndex = i;
                 }
 
                 //Decode byte
                 if (i2cSequenceStarted && clockRisingEdge)
                 {
+                    //terminate start event
+                    if (startEventFired)
+                    {
+                        startEventFired = false;
+                        decoderOutputList.Add(new DecoderOutputEvent(startIndex, i, DecoderOutputColor.Green, "S"));
+                        startIndex = i;
+                    }
+
                     if (bitCounter == 8)
                     {
                         decodedByte = 0;
                         startIndex = i;
                     }
-                    if (bitCounter >= 1) //don't take ACK in here
-                        decodedByte = (byte)((decodedByte << 1) + (SDIO[i] ? 1 : 0));
+
+                    //for very first bit: check for R/W bit
+                    if (!addressDecoded && (bitCounter == 1))
+                        read = SDIO[i];
+                    //for all other bits: accumulate value
+                    else
+                        if (bitCounter >= 1) //don't use ACK bit for accumulation
+                            decodedByte = (byte)((decodedByte << 1) + (SDIO[i] ? 1 : 0));
 
                     if (bitCounter == 1)
                     {
@@ -94,7 +109,10 @@ namespace LabNation.Decoders
                         }
                         else
                         {
-                            decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, i, DecoderOutputColor.DarkPurple, decodedByte, "Data"));
+                            if (read)
+                                decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, i, DecoderOutputColor.Purple, decodedByte, "Read"));
+                            else
+                                decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, i, DecoderOutputColor.DarkPurple, decodedByte, "Write"));
                         }
                         startIndex = i;
                     }
@@ -111,17 +129,6 @@ namespace LabNation.Decoders
                     else
                         bitCounter--;
                 }
-            }
-
-            //visual patch at the very end, as otherwise the Start events would be rendered only 1 sample wide
-            //use the same width as a Stop event
-            List<DecoderOutput> stopEvents = decoderOutputList.Where(x => x.Text == "P").ToList();
-            if (stopEvents.Count > 0)
-            {
-                int eventSize = stopEvents[0].EndIndex - stopEvents[0].StartIndex;
-                List<DecoderOutput> startEvents = decoderOutputList.Where(x => x.Text == "S").ToList();
-                foreach (var item in startEvents)
-                    item.StartIndex -= eventSize;
             }
 
             return decoderOutputList.ToArray();
