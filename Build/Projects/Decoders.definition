@@ -14,7 +14,7 @@
   <Properties>
     <FrameworkVersions>
       <Platform Name="Android">
-        <Version>v4.0</Version>
+        <Version>v4.0.3</Version>
       </Platform>
     </FrameworkVersions>  
     <NoWarn>1591</NoWarn>
