@@ -30,7 +30,7 @@
                                VersionMajor = 0,
                                VersionMinor = 1,
                                Description = "Serial decoder",
-                               InputWaveformTypes = new Dictionary<string, Type> { { "UART", typeof(float) } },
+                               InputWaveformTypes = new Dictionary<string, Type> { { "UART", typeof(bool) } },
                                Parameters = new DecoderParameter[]
                                        {
                                            new DecoderParamaterStrings("Baudrate", new[] { "Auto", "75", "110", "300", "1200", "2400", "4800", "9600", "14400", "19200", "28800", "38400", "57600", "115200" }, "Auto", "Bits per second (baudrate)."),
@@ -57,7 +57,7 @@
             try
             {
                 //// Get samples.
-                var serialData = (float[])inputWaveforms["UART"];
+                var serialData = (bool[])inputWaveforms["UART"];
 
                 //// Fetch parameters.
                 int selectedBaudrate = 0;
@@ -100,47 +100,6 @@
 
                 int frameLength = 1 + selectedDatabits + parityLength + selectedStopbits;
 
-                //// Sort values.
-                var dic = new Dictionary<float, int>();
-                foreach (var f in serialData)
-                {
-                    if (dic.ContainsKey(f))
-                    {
-                        dic[f]++;
-                    }
-                    else
-                    {
-                        dic.Add(f, 1);
-                    }
-                }
-
-                float min = float.MaxValue;
-                float max = float.MinValue;
-
-                //// Take Min Max value.
-                foreach (var i in dic.Where(i => i.Value > 50))
-                {
-                    if (i.Key < min)
-                    {
-                        min = i.Key;
-                    }
-
-                    if (i.Key > max)
-                    {
-                        max = i.Key;
-                    }
-                }
-
-                if (Math.Abs(min - float.MaxValue) < 0.01 || Math.Abs(max - float.MinValue) < 0.01)
-                {
-                    return decoderOutputList.ToArray();
-                }
-
-                //// Calc Low High threshold, this way we can handle almost all signal levels.
-                var th = (max - min) / 4;
-                float maxth = max - th;
-                float minth = min + th;
-
                 int indexSignalUp = -1;
                 int indexSignalDown = -1;
                 var bits = new List<Bit>();
@@ -148,7 +107,7 @@
                 //// Get bit length from the smallest bit.
                 for (int i = 0; i < serialData.Length - 1; i++)
                 {
-                    if (serialData[i] > maxth)
+                    if (serialData[i])
                     {
                         if (indexSignalDown == -1)
                         {
@@ -163,8 +122,7 @@
                             //// Debug.WriteLine("bitlength L-H = {0} , index = {1}", bitlength, i);
                         }
                     }
-
-                    if (serialData[i] < minth)
+                    else
                     {
                         if (indexSignalUp == -1)
                         {
