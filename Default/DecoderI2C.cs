@@ -54,7 +54,6 @@ namespace LabNation.Decoders
             for (int i = 1; i < SCLK.Length; i++)
             {
                 bool clockRisingEdge = SCLK[i] && !SCLK[i - 1];
-                bool clockFallingEdge = !SCLK[i] && SCLK[i - 1];
                 bool dataRisingEdge = SDIO[i] && !SDIO[i - 1];
                 bool dataFallingEdge = !SDIO[i] && SDIO[i - 1];                
 

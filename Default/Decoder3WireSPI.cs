@@ -60,9 +60,6 @@ namespace LabNation.Decoders
                 bool ncsRisingEdge = nCS[i] && !nCS[i - 1];
                 bool ncsFallingEdge = !nCS[i] && nCS[i - 1];
                 bool clockRisingEdge = SCLK[i] && !SCLK[i - 1];
-                bool clockFallingEdge = !SCLK[i] && SCLK[i - 1];
-                bool dataRisingEdge = SDIO[i] && !SDIO[i - 1];
-                bool dataFallingEdge = !SDIO[i] && SDIO[i - 1];
 
                 //Check for start sequence
                 if (ncsFallingEdge)
