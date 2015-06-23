@@ -61,7 +61,7 @@ namespace LabNation.Decoders
 
             int startIndex = 0;
             bool toggle = false;
-            for (int i = 1; i < convertedValues.Length; i++)
+            for (int i = 1; i < convertedValues.Length-1; i++)
             {
                 if (convertedValues[i] != convertedValues[i - 1])
                 {
@@ -71,6 +71,10 @@ namespace LabNation.Decoders
                     toggle = !toggle;
                 }
             }
+
+            //last element separately, in case there was not a single transition on the bus
+            DecoderOutputColor finalColor = toggle ? DecoderOutputColor.Green : DecoderOutputColor.Purple;
+            decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, convertedValues.Length - 1, finalColor, (byte)convertedValues[convertedValues.Length - 1], ""));
 
             return decoderOutputList.ToArray();
         }
