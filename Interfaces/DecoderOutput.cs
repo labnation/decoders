@@ -10,8 +10,8 @@ namespace LabNation.Interfaces
 
     public abstract class DecoderOutput
     {
-        public int StartIndex;
-        public int EndIndex;
+        public int StartIndex { get; set; }
+        public int EndIndex { get; set; }
         public string Text { get; private set; }
         public DecoderOutputColor Color { get; private set; }
 
