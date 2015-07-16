@@ -32,6 +32,7 @@
     <Compile Include="Decoder3WireSPI.cs" />
 	<Compile Include="Decoder4WireSPI.cs" />
     <Compile Include="DecoderI2C.cs" />
+	<Compile Include="DecoderSerial.cs" />
     <Compile Include="DecoderSmartScopeFPGA.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </Files>
