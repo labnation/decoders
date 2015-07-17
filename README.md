@@ -90,10 +90,16 @@ Copy the output DLL from the build directory (i.e. ```./MyDecoders/bin/Debug/MyD
 Restart the SmartScope app and enjoy your decoder
 
 ## DLL location
+Our approach allows a DLL file compiled on any platform, to be used on any other platform. So a DLL file compiled on Windows can be used on iOS. Just make sure the DLL is placed in the correct folder, listed below:
+
 | Platform        | Path          | 
 | ------------- | ------------- |
 | Mac           | ```/Users/<username>/LabNation/Plugins``` |
 | Linux         | ```~/LabNation/Plugins```                 |
 | Windows       | ```<My Documents>/LabNation/Plugins```    |
 | Android       | ```<sd-card>/LabNation/Plugins```         |
+| iOS           | See section below regarding DropBox       |
+
+## Fetch DLL over DropBox
+For all platforms, you can access a DLL file over DropBox. To do so, in the app go to Menu -> Add decoder -> Fetch from dropbox. If never done before, this will authenticate to DropBox and create all folders required. Next, on your PC you can save the DLL file to \Dropbox\Apps\LabNation SmartScope\Plugins. All DLL files you place here can now be accessed from all your devices over dropbox!
 
