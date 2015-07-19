@@ -1,4 +1,4 @@
-﻿///////////////////
+///////////////////
 //
 //  UART/RS232 decoder by Robert44
 //  https://github.com/robert44/decoders
