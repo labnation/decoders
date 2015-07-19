@@ -40,7 +40,7 @@ namespace LabNation.Decoders
                                Parameters = new DecoderParameter[]
                                        {
                                            new DecoderParamaterStrings("Baud", new[] { "Auto", "75", "110", "300", "1200", "2400", "4800", "9600", "14400", "19200", "28800", "38400", "57600", "115200" }, "Auto", "Bits per second (baudrate)."),
-                                           new DecoderParamaterInts("Bits", new[] { 7, 8 }, "Databits", 8, "Data bits."),
+                                           new DecoderParamaterInts("Bits", new[] { 5, 6, 7, 8 }, "Databits", 8, "Data bits."),
                                            new DecoderParamaterStrings("Par", new[] { "None", "Odd", "Even", "Mark", "Space" }, "None", "Parity."),
                                            new DecoderParamaterInts("Stopbits", new[] { 1, 2 }, "Stopbits", 1, "stop bit setting."),
                                            new DecoderParamaterStrings("Mode", new[] { "UART", "RS232" }, "RS232", "Select if the signal needs to be inverted.")
@@ -72,7 +72,7 @@ namespace LabNation.Decoders
                 {
                     int.TryParse(selectedBaudrateStr, out selectedBaudrate);
                 }
-
+                
                 var selectedDatabits = (int)parameters["Bits"];
                 var selectedStopbits = (int)parameters["Stopbits"];
                 var selectedMode = (string)parameters["Mode"];
