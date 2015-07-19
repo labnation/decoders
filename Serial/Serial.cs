@@ -34,7 +34,7 @@
                                Parameters = new DecoderParameter[]
                                        {
                                            new DecoderParamaterStrings("Baudrate", new[] { "Auto", "75", "110", "300", "1200", "2400", "4800", "9600", "14400", "19200", "28800", "38400", "57600", "115200" }, "Auto", "Bits per second (baudrate)."),
-                                           new DecoderParamaterInts("Databits", new[] { 7, 8 }, "Databits", 8, "Data bits."),
+                                           new DecoderParamaterInts("Databits", new[] { 5, 6, 7, 8 }, "Databits", 8, "Data bits."),
                                            new DecoderParamaterStrings("Parity", new[] { "None", "Odd", "Even", "Mark", "Space" }, "None", "Parity."),
                                            new DecoderParamaterInts("Stopbits", new[] { 1, 2 }, "Stopbits", 1, "stop bit setting."),
                                            new DecoderParamaterStrings("Mode", new[] { "UART", "RS232" }, "RS232", "Select if the signal needs to be inverted.")
