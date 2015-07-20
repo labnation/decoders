@@ -6,12 +6,14 @@ using System.Threading.Tasks;
 
 namespace LabNation.Interfaces
 {
+    public enum ToggleRate { High, Medium, Low }
     public class DecoderDescription
     {
         public string Name;
         public string ShortName;
         public string Author;
         public Dictionary<string, Type> InputWaveformTypes;
+        public Dictionary<string, ToggleRate> InputWaveformExpectedToggleRates;
         public DecoderParameter[] Parameters;
         public int VersionMajor;
         public int VersionMinor;

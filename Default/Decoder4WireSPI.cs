@@ -30,6 +30,13 @@ namespace LabNation.Decoders
                         { "MOSI", typeof(bool)},
                         { "MISO", typeof(bool)}
                     },
+                    InputWaveformExpectedToggleRates = new Dictionary<string, ToggleRate>() 
+                    {
+                        { "nCS", ToggleRate.Low},
+                        { "SCLK", ToggleRate.High},
+                        { "MOSI", ToggleRate.Medium},
+                        { "MISO", ToggleRate.Medium}
+                    },
                     Parameters = new DecoderParameter[]
                     {
                         new DecoderParamaterInts("CPOL", new int[] { 0, 1 }, "", 0, "Clock polarity. Defines whether clock is high (1) or low (0) when idle (when no communication is ongoing)."),

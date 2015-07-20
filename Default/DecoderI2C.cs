@@ -28,6 +28,11 @@ namespace LabNation.Decoders
                         { "SCL", typeof(bool)},
                         { "SDA", typeof(bool)}
                     },
+                    InputWaveformExpectedToggleRates = new Dictionary<string, ToggleRate>() 
+                    {
+                        { "SCL", ToggleRate.High},
+                        { "SDA", ToggleRate.Medium}
+                    },
                     Parameters = null
                 };
             }
