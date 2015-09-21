@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Name="Decoders" Path="Default" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows">
+<Project Name="Decoders" Path="Default" Type="Library" Platforms="Android,iOS,Linux,MacOS,Windows,WindowsGL">
   <References>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -26,6 +26,7 @@
       <Platform Name="Linux">TRACE;LINUX</Platform>
       <Platform Name="MacOS">MONOMAC</Platform>
       <Platform Name="Windows">TRACE;WINDOWS</Platform>
+	  <Platform Name="WindowsGL">TRACE;WINDOWS</Platform>
     </CustomDefinitions>
   </Properties>
   <Files>

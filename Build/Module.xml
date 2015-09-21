@@ -4,7 +4,7 @@
   <DefaultAction>Generate</DefaultAction>
   <GenerateNuGetRepositories>true</GenerateNuGetRepositories>
   <DisableSynchronisation xsi:nil="true" />
-  <SupportedPlatforms>Android,Linux,Windows,iOS,MacOS</SupportedPlatforms>
+  <SupportedPlatforms>Android,Linux,Windows,WindowsGL,iOS,MacOS</SupportedPlatforms>
   <DefaultWindowsPlatforms>Windows</DefaultWindowsPlatforms>              
   <DefaultLinuxPlatforms>Linux</DefaultLinuxPlatforms>              
   <DefaultMacOSPlatforms>MacOS,iOS,Android</DefaultMacOSPlatforms>
