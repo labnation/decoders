@@ -46,7 +46,7 @@ namespace LabNation.Decoders
             }
         }
 
-        public DecoderOutput[] Decode(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod)
+        public DecoderOutput[] Process(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod)
         {
             //name input waveforms for easier usage
             bool[] nCS = (bool[])inputWaveforms["nCS"];

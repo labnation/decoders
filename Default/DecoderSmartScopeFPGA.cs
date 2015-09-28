@@ -32,7 +32,7 @@ namespace LabNation.Decoders
             }
         }
 
-        public DecoderOutput[] Decode(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod)
+        public DecoderOutput[] Process(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod)
         {
             DecoderOutput[] i2cStream = (DecoderOutput[])inputWaveforms["I2C"];
 

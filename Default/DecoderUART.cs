@@ -56,7 +56,7 @@ namespace LabNation.Decoders
         /// <param name="parameters"> The parameters. </param>
         /// <param name="samplePeriod"> The sample period. </param>
         /// <returns> The output returned to the scope. </returns>
-        public DecoderOutput[] Decode(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod)
+        public DecoderOutput[] Process(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod)
         {
             var decoderOutputList = new List<DecoderOutput>();
 

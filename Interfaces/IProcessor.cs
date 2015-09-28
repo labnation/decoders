@@ -20,9 +20,18 @@ namespace LabNation.Interfaces
         public string Description;
     }
 
-    public interface IDecoder
+    public interface IProcessor
     {
         DecoderDescription Description { get; }
-        DecoderOutput[] Decode(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod);
+    }
+
+    public interface IDecoder : IProcessor
+    {
+        DecoderOutput[] Process(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod);
+    }
+
+    public interface IOperator : IProcessor
+    {
+        float[] Process(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod);
     }
 }
