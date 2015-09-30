@@ -18,7 +18,7 @@ namespace LabNation.Decoders
     /// <summary>
     /// The serial.
     /// </summary>
-    [Export(typeof(IDecoder))]
+    [Export(typeof(IProcessor))]
     public class DecoderUART : IDecoder
     {
         /// <summary>

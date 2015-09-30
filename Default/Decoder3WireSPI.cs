@@ -8,7 +8,7 @@ using LabNation.Interfaces;
 
 namespace LabNation.Decoders
 {
-    [Export(typeof(IDecoder))]
+    [Export(typeof(IProcessor))]
     public class Decoder3WireSPI : IDecoder
     {
         public DecoderDescription Description { 

@@ -8,7 +8,7 @@ using LabNation.Interfaces;
 
 namespace LabNation.Decoders
 {
-    [Export(typeof(IDecoder))]
+    [Export(typeof(IProcessor))]
     public class DecoderBus : IDecoder
     {
         public DecoderDescription Description
@@ -33,8 +33,7 @@ namespace LabNation.Decoders
                         { "B5", typeof(bool?)},
                         { "B6", typeof(bool?)},
                         { "B7", typeof(bool?)}
-                    },
-                    Parameters = null
+                    }
                 };
             }
         }

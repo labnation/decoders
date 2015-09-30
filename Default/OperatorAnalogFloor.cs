@@ -8,8 +8,8 @@ using LabNation.Interfaces;
 
 namespace LabNation.Decoders
 {
-    [Export(typeof(IOperator))]
-    public class OperatorMath : IOperator
+    [Export(typeof(IProcessor))]
+    public class OperatorAnalogFloor : IOperatorAnalog
     {
         public DecoderDescription Description
         {
@@ -17,18 +17,16 @@ namespace LabNation.Decoders
             {
                 return new DecoderDescription()
                 {
-                    Name = "Math",
-                    ShortName = "MAT",
+                    Name = "Floor",
+                    ShortName = "FLR",
                     Author = "LabNation",
                     VersionMajor = 0,
                     VersionMinor = 1,
-                    Description = "Basic math operator",
+                    Description = "Rounds values to their lower integer neighbor",
                     InputWaveformTypes = new Dictionary<string, Type>() 
                     {
-                        { "I0", typeof(float)},
-                        { "I1", typeof(float)}
-                    },
-                    Parameters = null
+                        { "In", typeof(float)}
+                    }
                 };
             }
         }
@@ -36,15 +34,14 @@ namespace LabNation.Decoders
         public float[] Process(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod)
         {
             //name input waveforms for easier usage
-            float[] i0 = (float[])inputWaveforms["I0"];
-            float[] i1 = (float[])inputWaveforms["I1"];
+            float[] i0 = (float[])inputWaveforms["In"];
 
             //allocate output buffer
             float[] output = new float[i0.Length];
 
-            //add together
+            //do operation
             for (int i = 0; i < i0.Length; i++)
-                output[i] = i0[i] + i1[i];
+                output[i] = (float)Math.Floor(i0[i]);
 
             return output;
         }

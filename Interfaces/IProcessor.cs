@@ -18,6 +18,7 @@ namespace LabNation.Interfaces
         public int VersionMajor;
         public int VersionMinor;
         public string Description;
+        public List<string> ContextMenuOrder;
     }
 
     public interface IProcessor
@@ -30,8 +31,13 @@ namespace LabNation.Interfaces
         DecoderOutput[] Process(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod);
     }
 
-    public interface IOperator : IProcessor
+    public interface IOperatorAnalog : IProcessor
     {
         float[] Process(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod);
+    }
+
+    public interface IOperatorDigital : IProcessor
+    {
+        bool[] Process(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod);
     }
 }
