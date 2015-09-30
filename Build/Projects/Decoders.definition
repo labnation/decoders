@@ -43,6 +43,7 @@
     <Compile Include="OperatorAnalogMathBasic.cs" />
     <Compile Include="OperatorAnalogMathMore.cs" />
     <Compile Include="OperatorAnalogRound.cs" />
+    <Compile Include="OperatorDigitalInvert.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
 
   </Files>
