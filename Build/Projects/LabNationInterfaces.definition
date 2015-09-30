@@ -31,7 +31,7 @@
   <Files>
     <Compile Include="DecoderOutput.cs" />
 	<Compile Include="DecoderParameter.cs" />
-    <Compile Include="IDecoder.cs" />
+    <Compile Include="IProcessor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </Files>
 </Project>
