@@ -71,10 +71,10 @@ namespace LabNation.Decoders
                     intern[i] = (float)sc0 * i0[i] * (float)sc1 * i1[i];
             else if (op2 == "/")
                 for (int i = 0; i < i0.Length; i++)
-                    intern[i] = (float)sc0 * i0[i] / (float)sc1 * i1[i];
+                    intern[i] = (float)sc0 * i0[i] / ((float)sc1 * i1[i]);
             else if (op2 == "Mod")
                 for (int i = 0; i < i0.Length; i++)
-                    intern[i] = (float)sc0 * i0[i] % (float)sc1 * i1[i];
+                    intern[i] = (float)sc0 * i0[i] % ((float)sc1 * i1[i]);
 
             if (op1 == "+")
                 for (int i = 0; i < i0.Length; i++)
