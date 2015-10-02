@@ -17,7 +17,7 @@ namespace LabNation.Decoders
             {
                 return new DecoderDescription()
                 {
-                    Name = "Round",
+                    Name = "Round to integer",
                     ShortName = "RND",
                     Author = "LabNation",
                     VersionMajor = 0,

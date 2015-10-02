@@ -17,7 +17,7 @@ namespace LabNation.Decoders
             {
                 return new DecoderDescription()
                 {
-                    Name = "Import digital",
+                    Name = "Digital to analog",
                     ShortName = "DIG",
                     Author = "LabNation",
                     VersionMajor = 0,

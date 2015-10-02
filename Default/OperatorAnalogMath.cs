@@ -9,7 +9,7 @@ using LabNation.Interfaces;
 namespace LabNation.Decoders
 {
     [Export(typeof(IProcessor))]
-    public class OperatorAnalogMathMore : IOperatorAnalog
+    public class OperatorAnalogMath : IOperatorAnalog
     {
         public DecoderDescription Description
         {
@@ -17,7 +17,7 @@ namespace LabNation.Decoders
             {
                 return new DecoderDescription()
                 {
-                    Name = "Math - More",
+                    Name = "Math",
                     ShortName = "MAT",
                     Author = "LabNation",
                     VersionMajor = 0,
