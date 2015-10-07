@@ -17,7 +17,7 @@ namespace LabNation.Decoders
             {
                 return new DecoderDescription()
                 {
-                    Name = "Invert",
+                    Name = "Invert sign",
                     ShortName = "INV",
                     Author = "LabNation",
                     VersionMajor = 0,
