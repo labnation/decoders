@@ -30,12 +30,12 @@ namespace LabNation.Decoders
                     },
                     Parameters = new DecoderParameter[]
                     {
-                        new DecoderParamaterInts("Offset", new int[] { -2, -1, 0 ,1 ,2}, "", 0, "Offset"),                        
+                        new DecoderParameterInts("Offset", new int[] { -2, -1, 0 ,1 ,2}, "", 0, "Offset"),                        
                         new DecoderParamaterStrings("Op1", new string[] { "+", "-", "*", "/", "Mod" }, "+", "Operator"),
                         new DecoderParamaterStrings("Dum1", new string[] { "(" }, "(", "Dummy1"),
-                        new DecoderParamaterInts("Sc0", new int[] { -2, -1, 0 ,1 ,2}, "", 1, "Input0 scaler"),
+                        new DecoderParameterNumpadFloat("Sc0", -100f, 100f, "", 1, "Input0 scaler"),
                         new DecoderParamaterStrings("Op2", new string[] { "+", "-", "*", "/", "Mod" }, "+", "Operator"),
-                        new DecoderParamaterInts("Sc1", new int[] { -2, -1, 0 ,1 ,2}, "", 1, "Input1 scaler"),
+                        new DecoderParameterNumpadFloat("Sc1", -100f, 100f, "", 1, "Input1 scaler"),
                         new DecoderParamaterStrings("Dum2", new string[] { ")" }, ")", "Dummy2"),
                     },
                     ContextMenuOrder = new List<string>(new string[] {"Offset", "Op1", "Dum1", "Sc0", "In0", "Op2", "Sc1", "In1", "Dum2"})
@@ -53,8 +53,8 @@ namespace LabNation.Decoders
             string op1 = (string)parameters["Op1"];
             string op2 = (string)parameters["Op2"];
             int offset = (int)parameters["Offset"];
-            int sc0 = (int)parameters["Sc0"];
-            int sc1 = (int)parameters["Sc1"];
+            float sc0 = (float)parameters["Sc0"];
+            float sc1 = (float)parameters["Sc1"];
 
             //allocate output buffer
             float[] output = new float[i0.Length];

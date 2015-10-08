@@ -35,7 +35,7 @@ namespace LabNation.Decoders
                     },
                     Parameters = new DecoderParameter[]
                     {
-                        new DecoderParamaterInts("RWPOS", new int[] { 0, 7 }, "", 0, "Position of the bit inside the Address byte which indicates whether a transaction is a Read or Write transaction"),
+                        new DecoderParameterInts("RWPOS", new int[] { 0, 7 }, "", 0, "Position of the bit inside the Address byte which indicates whether a transaction is a Read or Write transaction"),
                     }
                 };
             }

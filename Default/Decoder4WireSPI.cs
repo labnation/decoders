@@ -39,8 +39,8 @@ namespace LabNation.Decoders
                     },
                     Parameters = new DecoderParameter[]
                     {
-                        new DecoderParamaterInts("CPOL", new int[] { 0, 1 }, "", 0, "Clock polarity. Defines whether clock is high (1) or low (0) when idle (when no communication is ongoing)."),
-                        new DecoderParamaterInts("CPHA", new int[] { 0, 1 }, "", 0, "Clock phase. Defines whether data is sampled on rising edge (0) or falling edge (1).")
+                        new DecoderParameterInts("CPOL", new int[] { 0, 1 }, "", 0, "Clock polarity. Defines whether clock is high (1) or low (0) when idle (when no communication is ongoing)."),
+                        new DecoderParameterInts("CPHA", new int[] { 0, 1 }, "", 0, "Clock phase. Defines whether data is sampled on rising edge (0) or falling edge (1).")
                     }
                 };
             }

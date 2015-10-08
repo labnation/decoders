@@ -29,7 +29,7 @@ namespace LabNation.Decoders
                     },
                     Parameters = new DecoderParameter[]
                     {
-                        new DecoderParamaterInts("AVGS", new int[] { 2,4,8,16,32,64,128}, "", 4, "Number of waveforms to average")
+                        new DecoderParameterInts("AVGS", new int[] { 2,4,8,16,32,64,128}, "", 4, "Number of waveforms to average")
                     }
                 };
             }
