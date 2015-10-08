@@ -18,9 +18,6 @@ namespace LabNation.Interfaces
             this.Description = description;
             this.PossibleValues = possibleValues;
             this.DefaultValue = defaultValue;
-
-            if (possibleValues.Length == 0)
-                throw new Exception("Decoder contains parameter " + shortName + " with 0 possible values");
         }
     }
 
@@ -34,10 +31,10 @@ namespace LabNation.Interfaces
         }
     }
 
-    public class DecoderParamaterInts : DecoderParameter
+    public class DecoderParameterInts : DecoderParameter
     {
         public string Unit {get; protected set;}
-        public DecoderParamaterInts(string shortName, int[] possibleValues, string unit, int defaultValue, string description)
+        public DecoderParameterInts(string shortName, int[] possibleValues, string unit, int defaultValue, string description)
             : base(shortName, description, possibleValues, defaultValue)
         {
             this.Unit = unit;
@@ -47,9 +44,9 @@ namespace LabNation.Interfaces
         }
     }    
 
-    public class DecoderParamaterIntRange : DecoderParamaterInts
+    public class DecoderParameterIntRange : DecoderParameterInts
     {
-        public DecoderParamaterIntRange(string shortName, int minValue, int maxValue, string unit, int defaultValue, string description)
+        public DecoderParameterIntRange(string shortName, int minValue, int maxValue, string unit, int defaultValue, string description)
             :base(shortName, CreateIntList(minValue, maxValue), unit, defaultValue, description)
         {
         }
@@ -61,6 +58,49 @@ namespace LabNation.Interfaces
                 intList.Add(i);
             
             return intList.ToArray();
+        }
+    }
+
+    public class DecoderParameterFloats : DecoderParameter
+    {
+        public string Unit { get; protected set; }
+        public DecoderParameterFloats(string shortName, float[] possibleValues, string unit, float defaultValue, string description)
+            : base(shortName, description, possibleValues, defaultValue)
+        {
+            this.Unit = unit;
+
+            if (!possibleValues.Contains(defaultValue))
+                throw new Exception(shortName + ": DefaultValue " + defaultValue + " not member of PossibleValues");
+        }
+    }
+
+    public class DecoderParameterNumpad : DecoderParameter
+    {
+        public object MinValue { get; protected set; }
+        public object MaxValue { get; protected set; }
+        public string Unit { get; protected set; }
+        public DecoderParameterNumpad(string shortName, object minValue, object maxValue, string unit, object defaultValue, string description)
+            : base(shortName, description, null, defaultValue)
+        {
+            this.MinValue = minValue;
+            this.MaxValue = maxValue;
+            this.Unit = unit;
+        }
+    }
+
+    public class DecoderParameterNumpadFloat : DecoderParameterNumpad
+    {
+        public DecoderParameterNumpadFloat(string shortName, float minValue, float maxValue, string unit, float defaultValue, string description)
+            : base(shortName, minValue, maxValue, unit, defaultValue, description)
+        {
+        }
+    }
+
+    public class DecoderParameterNumpadInt : DecoderParameterNumpad
+    {
+        public DecoderParameterNumpadInt(string shortName, int minValue, int maxValue, string unit, int defaultValue, string description)
+            : base(shortName, minValue, maxValue, unit, defaultValue, description)
+        {
         }
     }
 }
