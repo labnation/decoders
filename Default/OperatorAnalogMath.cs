@@ -30,7 +30,7 @@ namespace LabNation.Decoders
                     },
                     Parameters = new DecoderParameter[]
                     {
-                        new DecoderParameterInts("Offset", new int[] { -2, -1, 0 ,1 ,2}, "", 0, "Offset"),                        
+                        new DecoderParameterNumpadFloat("Offset", -100f, 100f, "", 0, "Offset"),                    
                         new DecoderParamaterStrings("Op1", new string[] { "+", "-", "*", "/", "Mod" }, "+", "Operator"),
                         new DecoderParamaterStrings("Dum1", new string[] { "(" }, "(", "Dummy1"),
                         new DecoderParameterNumpadFloat("Sc0", -100f, 100f, "", 1, "Input0 scaler"),
@@ -52,7 +52,7 @@ namespace LabNation.Decoders
             //fetch operators
             string op1 = (string)parameters["Op1"];
             string op2 = (string)parameters["Op2"];
-            int offset = (int)parameters["Offset"];
+            float offset = (float)parameters["Offset"];
             float sc0 = (float)parameters["Sc0"];
             float sc1 = (float)parameters["Sc1"];
 
