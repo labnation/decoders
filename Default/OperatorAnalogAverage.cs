@@ -17,19 +17,19 @@ namespace LabNation.Decoders
             {
                 return new DecoderDescription()
                 {
-                    Name = "Average",
+                    Name = "Average over time",
                     ShortName = "AVG",
                     Author = "LabNation",
                     VersionMajor = 0,
                     VersionMinor = 1,
-                    Description = "Averages multiple waveforms",
+                    Description = "Averages multiple acquisitions of a single channel over time",
                     InputWaveformTypes = new Dictionary<string, Type>() 
                     {
                         { "In", typeof(float)}
                     },
                     Parameters = new DecoderParameter[]
                     {
-                        new DecoderParameterInts("AVGS", new int[] { 2,4,8,16,32,64,128}, "", 4, "Number of waveforms to average")
+                        new DecoderParameterInts("AVGS", new int[] { 2,4,8,16,32,64,128}, "", 4, "Number of acquisitions to average")
                     }
                 };
             }

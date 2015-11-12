@@ -17,7 +17,7 @@ namespace LabNation.Decoders
             {
                 return new DecoderDescription()
                 {
-                    Name = "Math",
+                    Name = "Free math",
                     ShortName = "MAT",
                     Author = "LabNation",
                     VersionMajor = 0,
