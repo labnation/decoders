@@ -41,7 +41,8 @@
     <Compile Include="OperatorAnalogImportDigital.cs" />
     <Compile Include="OperatorAnalogInvert.cs" />
     <Compile Include="OperatorAnalogMath.cs" />
-    <Compile Include="OperatorAnalogRound.cs" />
+    <Compile Include="OperatorAnalogAdd.cs" />
+    <Compile Include="OperatorAnalogSubtract.cs" />
     <Compile Include="OperatorDigitalInvert.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
 
