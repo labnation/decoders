@@ -7,15 +7,6 @@ using System.Threading.Tasks;
 namespace LabNation.Interfaces
 {
     public enum DecoderOutputColor { Green, Red, DarkRed, Orange, Yellow, Black, DarkPurple, Purple, Blue, DarkBlue}
-    public enum DecoderIndex
-    {
-        DecoderOutputEvent = 0,
-        DecoderOutputValue = 1
-    }
-    public enum DecoderTypeIndex
-    {
-        TypeByte = 0
-    }
 
     [SerializableAttribute]
     public abstract class DecoderOutput
