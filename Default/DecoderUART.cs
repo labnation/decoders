@@ -29,23 +29,23 @@ namespace LabNation.Decoders
             get
             {
                 return new DecoderDescription
-                           {
-                               Name = "UART/RS232 decoder",
-                               ShortName = "UART",
-                               Author = "robert44",
-                               VersionMajor = 0,
-                               VersionMinor = 1,
-                               Description = "Serial decoder for UART and RS232 protocols",
-                               InputWaveformTypes = new Dictionary<string, Type> { { "Input", typeof(bool) } },
-                               Parameters = new DecoderParameter[]
-                                       {
-                                           new DecoderParamaterStrings("Baud", new[] { "Auto", "75", "110", "300", "1200", "2400", "4800", "9600", "14400", "19200", "28800", "38400", "57600", "115200" }, "Auto", "Bits per second (baudrate)."),
-                                           new DecoderParameterInts("Bits", new[] { 5, 6, 7, 8 }, "Databits", 8, "Data bits."),
-                                           new DecoderParamaterStrings("Par", new[] { "None", "Odd", "Even", "Mark", "Space" }, "None", "Parity."),
-                                           new DecoderParameterInts("Stopbits", new[] { 1, 2 }, "Stopbits", 1, "stop bit setting."),
-                                           new DecoderParamaterStrings("Mode", new[] { "UART", "RS232" }, "RS232", "Select if the signal needs to be inverted.")
-                                       }
-                           };
+                {
+                    Name = "UART/RS232 decoder",
+                    ShortName = "UART",
+                    Author = "robert44",
+                    VersionMajor = 0,
+                    VersionMinor = 1,
+                    Description = "Serial decoder for UART and RS232 protocols",
+                    InputWaveformTypes = new Dictionary<string, Type> { { "Input", typeof(bool) } },
+                    Parameters = new DecoderParameter[]
+                    {
+                        new DecoderParamaterStrings("Baud", new[] { "Auto", "75", "110", "300", "1200", "2400", "4800", "9600", "14400", "19200", "28800", "38400", "57600", "115200" }, "Auto", "Bits per second (baudrate)."),
+                        new DecoderParameterInts("Bits", new[] { 5, 6, 7, 8 }, "Databits", 8, "Data bits."),
+                        new DecoderParamaterStrings("Par", new[] { "None", "Odd", "Even", "Mark", "Space" }, "None", "Parity."),
+                        new DecoderParameterInts("Stopbits", new[] { 1, 2 }, "Stopbits", 1, "stop bit setting."),
+                        new DecoderParamaterStrings("Mode", new[] { "UART", "RS232" }, "RS232", "Select if the signal needs to be inverted.")
+                    }
+                };
             }
         }
 
@@ -72,7 +72,7 @@ namespace LabNation.Decoders
                 {
                     int.TryParse(selectedBaudrateStr, out selectedBaudrate);
                 }
-                
+
                 var selectedDatabits = (int)parameters["Bits"];
                 var selectedStopbits = (int)parameters["Stopbits"];
                 var selectedMode = (string)parameters["Mode"];
@@ -145,17 +145,26 @@ namespace LabNation.Decoders
                     }
                 }
 
-                //// Minimum bit length in msec.
-                double minimumBitlength = bits.Select(bit => bit.Length).Concat(new[] { double.MaxValue }).Min();
-                //// Debug.WriteLine("Minimum bit length = {0} msec", minimumBitlength);
-
-                if (Math.Abs(minimumBitlength - double.MaxValue) < 0.1)
+                double minimumBitlength = 0.00868;
+                if (selectedBaudrate == 0)
                 {
-                    // possible show error in detecting baudrate.
-                    return decoderOutputList.ToArray();
-                }
+                    var bitlengths = from bit in bits group bit by bit.Length into g where g.Count() > 1 select new { Length = g.Key, Count = g.Count() };
+                    minimumBitlength = double.MaxValue;
+                    foreach (var bitLength in bitlengths)
+                    {
+                        if (minimumBitlength > bitLength.Length)
+                        {
+                            minimumBitlength = bitLength.Length;
+                        }
+                    }
 
-                if (selectedBaudrate != 0)                
+                    if (Math.Abs(minimumBitlength - double.MaxValue) < 0.1)
+                    {
+                        // possible show error in detecting baudrate.
+                        return decoderOutputList.ToArray();
+                    }
+                }
+                else
                 {
                     minimumBitlength = 1000.0 / selectedBaudrate;
                 }
@@ -168,23 +177,52 @@ namespace LabNation.Decoders
                 foreach (Bit bit in bits)
                 {
                     var count = (int)Math.Round(bit.Length / minimumBitlength);
-                    if (count < (1 + selectedDatabits + 1))
+                    for (var i = 0; i < count; i++)
                     {
-                        for (var i = 0; i < count; i++)
-                        {
-                            resultBits.Add(new Bit(indexOffset, indexstep, bit.Value));
-                            bitstring.Append(bit.Value == 1 ? "1" : "0");
-                            indexOffset += indexstep;
-                        }
+                        resultBits.Add(new Bit(indexOffset, indexstep, bit.Value));
+                        bitstring.Append(bit.Value == 1 ? "1" : "0");
+                        indexOffset += indexstep;
                     }
+                }
+
+                if (bitstring.Length < frameLength)
+                {
+                    // possible show error no data.
+                    return decoderOutputList.ToArray();
                 }
 
                 resultBits.Add(new Bit(bits[bits.Count - 1].Index + indexstep, indexstep, 1));
                 var bitstr = bitstring.ToString();
                 var bitstream = bitstr.Substring(bitstr.IndexOf('0')) + "1" + "1"; // Add end bit
 
-                Debug.WriteLine(bitstream);
-                for (int i = 0; i < bitstream.Length; i += frameLength)
+                int bestOffset = 0;
+                int maxCount = 0;
+
+                // Find the offset that gives the most frames.
+                for (int offset = 0; offset < bitstream.Length / 4; offset++)
+                {
+                    int cntFrames = 0;
+                    for (int i = offset; i < bitstream.Length; i += frameLength)
+                    {
+                        if (i + selectedDatabits + parityLength + selectedStopbits < bitstream.Length)
+                        {
+                            // Find start and stop bit.
+                            if (bitstream[i] == '0' && bitstream[i + selectedDatabits + parityLength + selectedStopbits] == '1')
+                            {
+                                cntFrames++;
+                            }
+                        }
+                    }
+
+                    if (cntFrames > maxCount)
+                    {
+                        maxCount = cntFrames;
+                        bestOffset = offset;
+                    }
+                }
+
+                int stepSize = frameLength;
+                for (int i = bestOffset; i < bitstream.Length; i += stepSize)
                 {
                     if (i + selectedDatabits + parityLength + selectedStopbits < bitstream.Length)
                     {
@@ -193,6 +231,7 @@ namespace LabNation.Decoders
                         {
                             if ((selectedStopbits == 1) | ((selectedStopbits == 2) && bitstream[i + selectedDatabits + parityLength + 1] == '1'))
                             {
+                                stepSize = frameLength;
                                 var databitsStr = bitstream.Substring(i + 1, selectedDatabits);
 
                                 bool parityOk = true;
@@ -265,6 +304,10 @@ namespace LabNation.Decoders
                                 }
                             }
                         }
+                        else
+                        {
+                            stepSize = 1;
+                        }
                     }
                 }
 
@@ -290,7 +333,7 @@ namespace LabNation.Decoders
             Mark,
             Space
         }
-
+        
         /// <summary>
         /// The bit.
         /// </summary>
