@@ -50,7 +50,7 @@ namespace LabNation.Decoders
             //start of brute-force decoding
             bool i2cSequenceStarted = false;
             bool startEventFired = false;
-            bool addressDecoded = false;
+            bool addressByteDecoded = false;
             int bitCounter = 0;
             int startIndex = 0;
             byte decodedByte = 0;
@@ -67,7 +67,7 @@ namespace LabNation.Decoders
                 {                    
                     i2cSequenceStarted = true;
                     startEventFired = true;
-                    addressDecoded = false;
+                    addressByteDecoded = false;
                     bitCounter = 8;
                     startIndex = i;
                 }
@@ -97,19 +97,32 @@ namespace LabNation.Decoders
                     }
 
                     //for very first bit: check for R/W bit
-                    if (!addressDecoded && (bitCounter == 1))
+                    if (!addressByteDecoded && (bitCounter == 1))
                         read = SDIO[i];
                     //for all other bits: accumulate value
                     else
                         if (bitCounter >= 1) //don't use ACK bit for accumulation
                             decodedByte = (byte)((decodedByte << 1) + (SDIO[i] ? 1 : 0));
 
-                    if (bitCounter == 1)
+                    if (bitCounter == 2)
                     {
-                        if (!addressDecoded)
+                        //address byte contains 7 address bits: write them here. 8th bit indicates WR/RD
+                        if (!addressByteDecoded)
                         {
                             decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, i, DecoderOutputColor.DarkBlue, decodedByte, "Address"));
-                            addressDecoded = true;
+                            startIndex = i;
+                        }
+                    }
+                    else if (bitCounter == 1)
+                    {
+                        if (!addressByteDecoded)
+                        {
+                            //8th bit of address byte indicates read/write
+                            addressByteDecoded = true;
+                            if (read)
+                                decoderOutputList.Add(new DecoderOutputEvent(startIndex, i, DecoderOutputColor.Purple, "R"));
+                            else
+                                decoderOutputList.Add(new DecoderOutputEvent(startIndex, i, DecoderOutputColor.DarkPurple, "W"));
                         }
                         else
                         {
