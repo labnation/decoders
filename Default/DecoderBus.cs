@@ -65,7 +65,7 @@ namespace LabNation.Decoders
                 if (convertedValues[i] != convertedValues[i - 1])
                 {
                     DecoderOutputColor color = toggle ? DecoderOutputColor.Green : DecoderOutputColor.Purple;
-                    decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, i, color, (byte)convertedValues[i-1], ""));
+                    decoderOutputList.Add(new DecoderOutputValueNumeric(startIndex, i, color, convertedValues[i - 1], "", 8));
                     startIndex = i;
                     toggle = !toggle;
                 }
@@ -73,7 +73,7 @@ namespace LabNation.Decoders
 
             //last element separately, in case there was not a single transition on the bus
             DecoderOutputColor finalColor = toggle ? DecoderOutputColor.Green : DecoderOutputColor.Purple;
-            decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, convertedValues.Length - 1, finalColor, (byte)convertedValues[convertedValues.Length - 1], ""));
+            decoderOutputList.Add(new DecoderOutputValueNumeric(startIndex, convertedValues.Length - 1, finalColor, convertedValues[convertedValues.Length - 1], "", 8));
 
             return decoderOutputList.ToArray();
         }

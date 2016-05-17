@@ -107,7 +107,7 @@ namespace LabNation.Decoders
                     {
                         if (!commandDecoded)
                         {
-                            decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, i, DecoderOutputColor.DarkBlue, decodedMosiByte, "Command"));
+                            decoderOutputList.Add(new DecoderOutputValueNumeric(startIndex, i, DecoderOutputColor.DarkBlue, decodedMosiByte, "Command", 8));
                             commandDecoded = true;
                         }
                         else
@@ -118,9 +118,9 @@ namespace LabNation.Decoders
                                 isMosiByte = true;
 
                             if (isMosiByte)
-                                decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, i, DecoderOutputColor.Purple, decodedMosiByte, "MOut"));
+                                decoderOutputList.Add(new DecoderOutputValueNumeric(startIndex, i, DecoderOutputColor.Purple, decodedMosiByte, "MOut", 8));
                             else
-                                decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, i, DecoderOutputColor.Blue, decodedMisoByte, "SOut"));
+                                decoderOutputList.Add(new DecoderOutputValueNumeric(startIndex, i, DecoderOutputColor.Blue, decodedMisoByte, "SOut", 8));
                         }
                         startIndex = i;
                         bitCounter = 7;

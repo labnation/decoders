@@ -109,7 +109,7 @@ namespace LabNation.Decoders
                         //address byte contains 7 address bits: write them here. 8th bit indicates WR/RD
                         if (!addressByteDecoded)
                         {
-                            decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, i, DecoderOutputColor.DarkBlue, decodedByte, "Address"));
+                            decoderOutputList.Add(new DecoderOutputValueNumeric(startIndex, i, DecoderOutputColor.DarkBlue, decodedByte, "Address", 8));
                             startIndex = i;
                         }
                     }
@@ -127,9 +127,9 @@ namespace LabNation.Decoders
                         else
                         {
                             if (read)
-                                decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, i, DecoderOutputColor.Purple, decodedByte, "Read"));
+                                decoderOutputList.Add(new DecoderOutputValueNumeric(startIndex, i, DecoderOutputColor.Purple, decodedByte, "Read", 8));
                             else
-                                decoderOutputList.Add(new DecoderOutputValue<byte>(startIndex, i, DecoderOutputColor.DarkPurple, decodedByte, "Write"));
+                                decoderOutputList.Add(new DecoderOutputValueNumeric(startIndex, i, DecoderOutputColor.DarkPurple, decodedByte, "Write", 8));
                         }
                         startIndex = i;
                     }

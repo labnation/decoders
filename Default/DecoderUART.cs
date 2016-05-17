@@ -291,7 +291,7 @@ namespace LabNation.Decoders
                                     Array.Reverse(databits);
                                     byte data = Convert.ToByte(new string(databits), 2);
                                     decoderOutputList.Add(new DecoderOutputEvent(resultBits[i].Index - indexstep, resultBits[i].Index, DecoderOutputColor.Orange, "START"));
-                                    decoderOutputList.Add(new DecoderOutputValue<byte>(resultBits[i].Index, resultBits[i].Index + (indexstep * selectedDatabits), DecoderOutputColor.Green, data, string.Empty));
+                                    decoderOutputList.Add(new DecoderOutputValueNumeric(resultBits[i].Index, resultBits[i].Index + (indexstep * selectedDatabits), DecoderOutputColor.Green, data, string.Empty, 8));
                                     int offset = 0;
                                     if (parity != Parity.None)
                                     {

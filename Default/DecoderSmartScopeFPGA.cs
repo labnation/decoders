@@ -58,9 +58,9 @@ namespace LabNation.Decoders
 
                 if (i2cSequenceStarted)
                 {
-                    if (currentData is DecoderOutputValue<byte>) //check for values only, not events
+                    if (currentData is DecoderOutputValueNumeric) //check for values only, not events
                     {
-                        byte rawValue = (currentData as DecoderOutputValue<byte>).Value;
+                        int rawValue = (currentData as DecoderOutputValueNumeric).Value;
                         if (!fpgaAddressed)
                         {
                             fpgaAddressed = true;
