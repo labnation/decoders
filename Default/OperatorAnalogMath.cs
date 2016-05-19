@@ -31,12 +31,12 @@ namespace LabNation.Decoders
                     Parameters = new DecoderParameter[]
                     {
                         new DecoderParameterNumpadFloat("Offset", -100f, 100f, "", 0, "Offset"),                    
-                        new DecoderParamaterStrings("Op1", new string[] { "+", "-", "*", "/", "Mod" }, "+", "Operator"),
-                        new DecoderParamaterStrings("Dum1", new string[] { "(" }, "(", "Dummy1"),
+                        new DecoderParameterStrings("Op1", new string[] { "+", "-", "*", "/", "Mod" }, "+", "Operator"),
+                        new DecoderParameterStrings("Dum1", new string[] { "(" }, "(", "Dummy1"),
                         new DecoderParameterNumpadFloat("Sc0", -100f, 100f, "", 1, "Input0 scaler"),
-                        new DecoderParamaterStrings("Op2", new string[] { "+", "-", "*", "/", "Mod" }, "+", "Operator"),
+                        new DecoderParameterStrings("Op2", new string[] { "+", "-", "*", "/", "Mod" }, "+", "Operator"),
                         new DecoderParameterNumpadFloat("Sc1", -100f, 100f, "", 1, "Input1 scaler"),
-                        new DecoderParamaterStrings("Dum2", new string[] { ")" }, ")", "Dummy2"),
+                        new DecoderParameterStrings("Dum2", new string[] { ")" }, ")", "Dummy2"),
                     },
                     ContextMenuOrder = new List<string>(new string[] {"Offset", "Op1", "Dum1", "Sc0", "In0", "Op2", "Sc1", "In1", "Dum2"})
                 };

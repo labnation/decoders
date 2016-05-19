@@ -21,9 +21,9 @@ namespace LabNation.Interfaces
         }
     }
 
-    public class DecoderParamaterStrings : DecoderParameter
+    public class DecoderParameterStrings : DecoderParameter
     {
-        public DecoderParamaterStrings(string shortName, string[] possibleValues, string defaultValue, string description)
+        public DecoderParameterStrings(string shortName, string[] possibleValues, string defaultValue, string description)
             :base(shortName, description, possibleValues, defaultValue)
         {
             if (!possibleValues.Contains(defaultValue))

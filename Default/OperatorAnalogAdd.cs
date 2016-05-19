@@ -30,7 +30,7 @@ namespace LabNation.Decoders
                     },
                     Parameters = new DecoderParameter[]
                     {
-                        new DecoderParamaterStrings("Dum", new string[] { "+" }, "+", "Dummy"),
+                        new DecoderParameterStrings("Dum", new string[] { "+" }, "+", "Dummy"),
                     },
                     ContextMenuOrder = new List<string>(new string[] { "In1", "Dum", "In2" })
                 };
