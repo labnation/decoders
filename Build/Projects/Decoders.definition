@@ -33,6 +33,7 @@
     <Compile Include="Decoder3WireSPI.cs" />
 	<Compile Include="Decoder4WireSPI.cs" />
     <Compile Include="DecoderI2C.cs" />
+    <Compile Include="DecoderI2S.cs" />
 	<Compile Include="DecoderBus.cs" />
 	<Compile Include="DecoderUART.cs" />
     <Compile Include="DecoderSmartScopeFPGA.cs" />
