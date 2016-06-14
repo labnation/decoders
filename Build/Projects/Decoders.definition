@@ -12,6 +12,7 @@
 	<Reference Include="LabNationInterfaces" />
   </References>
   <Properties>
+    <LangVersion>5</LangVersion>
     <FrameworkVersions>
       <Platform Name="Android">
         <Version>v4.0.3</Version>
