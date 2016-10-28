@@ -16,6 +16,18 @@
       <Platform Name="Android">
         <Version>v4.0.3</Version>
       </Platform>
+      <Platform Name="Windows">
+        <Version>v4.0</Version>
+      </Platform>
+      <Platform Name="WindowsGL">
+        <Version>v4.0</Version>
+      </Platform>
+      <Platform Name="MacOS">
+        <Version>v4.0</Version>
+      </Platform>
+      <Platform Name="Linux">
+        <Version>v4.0</Version>
+      </Platform>
     </FrameworkVersions>  
     <NoWarn>1591</NoWarn>
     <RootNamespace>LabNation</RootNamespace>
