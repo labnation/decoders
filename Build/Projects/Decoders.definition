@@ -49,6 +49,8 @@
     <Compile Include="DecoderI2S.cs" />
 	<Compile Include="DecoderBus.cs" />
 	<Compile Include="DecoderUART.cs" />
+	<Compile Include="DecoderEdgeCounter.cs" />
+	<Compile Include="DecoderEdgeIntervals.cs" />
     <Compile Include="DecoderSmartScopeFPGA.cs" />
     <Compile Include="OperatorAnalogAbs.cs" />
     <Compile Include="OperatorAnalogAverage.cs" />
