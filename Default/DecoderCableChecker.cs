@@ -61,15 +61,17 @@ namespace LabNation.Decoders
             string result = "OK";
             for (int i = 2; i < convertedValues.Length-1; i++)
             {
-                if (!(convertedValues[i] == convertedValues[i - 2]))
+                if (!(convertedValues[i] == convertedValues[i - 1]))
                     if (!(convertedValues[i+1] == convertedValues[i - 2] + 1))
                         if (convertedValues[i+1] != 0)
                             result = "Not incrementing!";
             }
 
+            if (result == "OK")            
+                decoderOutputList.Add(new DecoderOutputEvent(0, convertedValues.Length - 1, DecoderOutputColor.Green, result));
+            else
+                decoderOutputList.Add(new DecoderOutputEvent(0, convertedValues.Length - 1, DecoderOutputColor.Red, result));
 
-            decoderOutputList.Add(new DecoderOutputEvent(0, convertedValues.Length - 1, DecoderOutputColor.Green, result));
-            
             return decoderOutputList.ToArray();
         }
     }
