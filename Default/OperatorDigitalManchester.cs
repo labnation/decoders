@@ -33,8 +33,6 @@ namespace LabNation.Decoders
 
         public bool[] Process(Dictionary<string, Array> inputWaveforms, Dictionary<string, object> parameters, double samplePeriod)
         {
-            string op1 = (string)parameters["Pol"];
-
             //name input waveforms for easier usage
             bool[] In = (bool[])inputWaveforms["In"];
 
