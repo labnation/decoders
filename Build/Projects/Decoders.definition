@@ -29,7 +29,7 @@
       <Platform Name="Linux">
         <Version>v4.0</Version>
       </Platform>
-    </FrameworkVersions>  
+    </FrameworkVersions>
     <NoWarn>1591</NoWarn>
     <RootNamespace>LabNation</RootNamespace>
     <PlatformSpecificOutputFolder>False</PlatformSpecificOutputFolder>
@@ -60,6 +60,7 @@
     <Compile Include="OperatorAnalogMath.cs" />
     <Compile Include="OperatorAnalogAdd.cs" />
     <Compile Include="OperatorAnalogSubtract.cs" />
+    <Compile Include="OperatorDigitalManchester.cs" />
     <Compile Include="OperatorDigitalInvert.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
 
