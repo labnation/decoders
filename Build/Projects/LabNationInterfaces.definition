@@ -14,7 +14,7 @@
     <LangVersion>5</LangVersion>
     <FrameworkVersions>
       <Platform Name="Android">
-        <Version>v4.0.3</Version>
+        <Version>v9.0</Version>
       </Platform>
       <Platform Name="Windows">
         <Version>v4.0</Version>
@@ -28,7 +28,7 @@
       <Platform Name="Linux">
         <Version>v4.0</Version>
       </Platform>
-    </FrameworkVersions>  
+    </FrameworkVersions>
     <NoWarn>1591</NoWarn>
     <RootNamespace>LabNation</RootNamespace>
     <PlatformSpecificOutputFolder>False</PlatformSpecificOutputFolder>
