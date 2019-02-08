@@ -23,17 +23,17 @@ namespace Iristick.Decoders
                     VersionMajor = 1,
                     VersionMinor = 0,
                     Description = "I2S decoder",
-                    InputWaveformTypes = new Dictionary<string, Type>() 
+                    InputWaveformTypes = new Dictionary<string, Type>()
                     {
                         { "BCLK", typeof(bool)},
                         { "LRCLK", typeof(bool)},
-						{ "DATA", typeof(bool)},
+                        { "DATA", typeof(bool)},
                     },
-                    InputWaveformExpectedToggleRates = new Dictionary<string, ToggleRate>() 
+                    InputWaveformExpectedToggleRates = new Dictionary<string, ToggleRate>()
                     {
                         { "BCLK", ToggleRate.High},
-						{ "LRCLK", ToggleRate.Low},
-						{ "DATA", ToggleRate.Medium}
+                        { "LRCLK", ToggleRate.Low},
+                        { "DATA", ToggleRate.Medium}
                     },
                     Parameters = new DecoderParameter[]
                     {
@@ -51,7 +51,7 @@ namespace Iristick.Decoders
             //name input waveforms for easier usage
             bool[] bclk = (bool[])inputWaveforms["BCLK"];
             bool[] lrclk = (bool[])inputWaveforms["LRCLK"];
-			bool[] data = (bool[])inputWaveforms["DATA"];
+            bool[] data = (bool[])inputWaveforms["DATA"];
 
             //initialize output structure
             List<DecoderOutput> decoderOutputList = new List<DecoderOutput>();
@@ -59,14 +59,14 @@ namespace Iristick.Decoders
             bool msbFirst = (string)parameters["first"] == "MSB";
             int bitsPerWord = (int)parameters["bits"];
             int delay = (int)parameters["delay"];
-            int[] bclkEdges = bclk.FindEdges((string)parameters["edge"] == "low" ? Helpers.Edge.Falling : Helpers.Edge.Rising );
+            int[] bclkEdges = bclk.FindEdges((string)parameters["edge"] == "low" ? Helpers.Edge.Falling : Helpers.Edge.Rising);
             int[] lrclkEdges = lrclk.FindEdges();
 
-            for(int i = 0; i < lrclkEdges.Length - 1; i++)
+            for (int i = 0; i < lrclkEdges.Length - 1; i++)
             {
                 int lrIndex = lrclkEdges[i];
-                int lrIndexNext = lrclkEdges[i+1];
-                
+                int lrIndexNext = lrclkEdges[i + 1];
+
                 //Scan each LRCLK word
                 bool isLeft = lrclk[lrIndex];
 
@@ -74,13 +74,16 @@ namespace Iristick.Decoders
                 Int32 word = 0;
                 int[] bitEdges;
 
-                try {
+                try
+                {
                     bitEdges = bclkEdges.Where(x => x >= lrIndex).Skip(delay).Take(bitsPerWord).ToArray();
-                } catch (Exception e) {
+                }
+                catch (Exception)
+                {
                     break;
                 }
-                
-                for(int j = 0; j < bitEdges.Length && j < bitsPerWord; j++)
+
+                for (int j = 0; j < bitEdges.Length && j < bitsPerWord; j++)
                 {
                     int bitIndex = bitEdges[j];
                     if (data[bitIndex])
@@ -90,7 +93,7 @@ namespace Iristick.Decoders
                 decoderOutputList.Add(new DecoderOutputValueNumeric(lrIndex, lrIndexNext, isLeft ? DecoderOutputColor.Black : DecoderOutputColor.Red, word, isLeft ? "L" : "R", bitsPerWord));
             }
 
-			return decoderOutputList.ToArray();
+            return decoderOutputList.ToArray();
         }
 
     }
@@ -103,7 +106,7 @@ namespace Iristick.Decoders
             Falling,
             Any
         }
-        
+
         public static int[] FindEdges(this bool[] arr, Edge edgeType = Edge.Any)
         {
             //Find BCLK edges - the only places where events will occur
@@ -112,7 +115,8 @@ namespace Iristick.Decoders
             arrShift[0] = arrShift[1];
 
             int[] edges;
-            switch(edgeType){
+            switch (edgeType)
+            {
                 case Edge.Any:
                     edges = arr.Select((b, i) => b != arrShift[i] ? i : -1).Where(x => x > 0).ToArray();
                     break;
