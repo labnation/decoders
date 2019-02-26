@@ -206,111 +206,111 @@ namespace LabNation.Decoders
                 int stepSize = frameLength;
                 for (int i = bestOffset; i < bitstream.Length - frameLength; i += stepSize)
                 {
-                        // Find start and stop bit.
-                        if (bitstream[i - 1] == '1' && bitstream[i] == '0' && bitstream[i + selectedDatabits + parityLength + selectedStopbits] == '1')
+                    // Find start and stop bit.
+                    if (bitstream[i - 1] == '1' && bitstream[i] == '0' && bitstream[i + selectedDatabits + parityLength + selectedStopbits] == '1')
+                    {
+                        if ((selectedStopbits == 1) | ((selectedStopbits == 2) && bitstream[i + selectedDatabits + parityLength + 1] == '1'))
                         {
-                            if ((selectedStopbits == 1) | ((selectedStopbits == 2) && bitstream[i + selectedDatabits + parityLength + 1] == '1'))
+                            stepSize = frameLength;
+                            var databitsStr = bitstream.Substring(i + 1, selectedDatabits);
+
+                            bool parityOk = true;
+                            char parityBit = ' ';
+                            if (parity != Parity.None)
                             {
-                                stepSize = frameLength;
-                                var databitsStr = bitstream.Substring(i + 1, selectedDatabits);
-
-                                bool parityOk = true;
-                                char parityBit = ' ';
-                                if (parity != Parity.None)
+                                int oneCount;
+                                parityBit = bitstream[i + selectedDatabits + 1];
+                                switch (parity)
                                 {
-                                    int oneCount;
-                                    parityBit = bitstream[i + selectedDatabits + 1];
-                                    switch (parity)
-                                    {
-                                        case Parity.Odd:
-                                            oneCount = databitsStr.Count(x => x == '1');
-                                            if (parityBit == '1')
-                                            {
-                                                oneCount++;
-                                            }
+                                    case Parity.Odd:
+                                        oneCount = databitsStr.Count(x => x == '1');
+                                        if (parityBit == '1')
+                                        {
+                                            oneCount++;
+                                        }
 
-                                            if (oneCount % 2 == 0)
-                                            {
-                                                parityOk = false;
-                                            }
+                                        if (oneCount % 2 == 0)
+                                        {
+                                            parityOk = false;
+                                        }
 
-                                            break;
-                                        case Parity.Even:
-                                            oneCount = databitsStr.Count(x => x == '1');
-                                            if (parityBit == '1')
-                                            {
-                                                oneCount++;
-                                            }
+                                        break;
+                                    case Parity.Even:
+                                        oneCount = databitsStr.Count(x => x == '1');
+                                        if (parityBit == '1')
+                                        {
+                                            oneCount++;
+                                        }
 
-                                            if (oneCount % 2 == 1)
-                                            {
-                                                parityOk = false;
-                                            }
+                                        if (oneCount % 2 == 1)
+                                        {
+                                            parityOk = false;
+                                        }
 
-                                            break;
-                                        case Parity.Mark:
-                                            if (parityBit != '1')
-                                            {
-                                                parityOk = false;
-                                            }
+                                        break;
+                                    case Parity.Mark:
+                                        if (parityBit != '1')
+                                        {
+                                            parityOk = false;
+                                        }
 
-                                            break;
-                                        case Parity.Space:
-                                            if (parityBit != '0')
-                                            {
-                                                parityOk = false;
-                                            }
+                                        break;
+                                    case Parity.Space:
+                                        if (parityBit != '0')
+                                        {
+                                            parityOk = false;
+                                        }
 
-                                            break;
-                                    }
+                                        break;
                                 }
-
-                                var databits = databitsStr.ToCharArray();
-                                Array.Reverse(databits);
-                                Int16 data = Convert.ToInt16(new string(databits), 2);
-                                decoderOutputList.Add(
-                                    new DecoderOutputEvent(
-                                        resultBits[i].Index,
-                                        resultBits[i].Index + indexstep,
-                                        DecoderOutputColor.Orange,
-                                        "START"
-                                        ));
-                                decoderOutputList.Add(
-                                    new DecoderOutputValueNumeric(
-                                        resultBits[i].Index + indexstep,
-                                        resultBits[i].Index + (indexstep * (selectedDatabits + 1)),
-                                        DecoderOutputColor.Green,
-                                        data,
-                                        string.Empty,
-                                        selectedDatabits
-                                        ));
-                                int offset = 1;
-                                if (parity != Parity.None)
-                                {
-                                    string par = string.Format("P:{0}", parityBit);
-                                    decoderOutputList.Add(
-                                        new DecoderOutputEvent(
-                                            resultBits[i].Index + (indexstep * (selectedDatabits + 1)),
-                                            resultBits[i].Index + (indexstep * (selectedDatabits + 2)),
-                                            parityOk ? DecoderOutputColor.DarkBlue : DecoderOutputColor.Red,
-                                            par
-                                            ));
-                                    offset++;
-                                }
-
-                                decoderOutputList.Add(
-                                    new DecoderOutputEvent(
-                                        resultBits[i].Index + (indexstep * (selectedDatabits + offset)),
-                                        resultBits[i].Index + (indexstep * (selectedDatabits + 1 + offset)),
-                                        DecoderOutputColor.Blue,
-                                        "STOP"
-                                        ));
                             }
+
+                            var databits = databitsStr.ToCharArray();
+                            Array.Reverse(databits);
+                            Int16 data = Convert.ToInt16(new string(databits), 2);
+                            decoderOutputList.Add(
+                                new DecoderOutputEvent(
+                                    resultBits[i].Index,
+                                    resultBits[i].Index + indexstep,
+                                    DecoderOutputColor.Orange,
+                                    "START"
+                                    ));
+                            decoderOutputList.Add(
+                                new DecoderOutputValueNumeric(
+                                    resultBits[i].Index + indexstep,
+                                    resultBits[i].Index + (indexstep * (selectedDatabits + 1)),
+                                    DecoderOutputColor.Green,
+                                    data,
+                                    string.Empty,
+                                    selectedDatabits
+                                    ));
+                            int offset = 1;
+                            if (parity != Parity.None)
+                            {
+                                string par = string.Format("P:{0}", parityBit);
+                                decoderOutputList.Add(
+                                    new DecoderOutputEvent(
+                                        resultBits[i].Index + (indexstep * (selectedDatabits + 1)),
+                                        resultBits[i].Index + (indexstep * (selectedDatabits + 2)),
+                                        parityOk ? DecoderOutputColor.DarkBlue : DecoderOutputColor.Red,
+                                        par
+                                        ));
+                                offset++;
+                            }
+
+                            decoderOutputList.Add(
+                                new DecoderOutputEvent(
+                                    resultBits[i].Index + (indexstep * (selectedDatabits + offset)),
+                                    resultBits[i].Index + (indexstep * (selectedDatabits + 1 + offset)),
+                                    DecoderOutputColor.Blue,
+                                    "STOP"
+                                    ));
                         }
-                        else
-                        {
-                            stepSize = 1;
-                        }
+                    }
+                    else
+                    {
+                        stepSize = 1;
+                    }
                 }
 
                 double baudrate = 1.0 / (minimumBitlength / 1000.0);
