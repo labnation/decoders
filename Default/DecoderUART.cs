@@ -118,14 +118,15 @@ namespace LabNation.Decoders
                 var bits = new List<Bit>();
                 int lastIndex = 0;
 
-                for (int i = 1; i < serialData.Length - 1; i++)
+                for (int i = 1; i < serialData.Length; i++)
                 {
                     if (serialData[i] != serialData[i - 1])
                     {
-                        bits.Add(new Bit(lastIndex, i - lastIndex, serialData[i] != inverted));
+                        bits.Add(new Bit(lastIndex, i - lastIndex, serialData[i - 1] == inverted));
                         lastIndex = i;
                     }
                 }
+                bits.Add(new Bit(lastIndex, serialData.Length - lastIndex - 1, serialData.Last() == inverted));
 
                 //// Get bit length from the smallest bit.
                 int minimumBitlength;
