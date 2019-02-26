@@ -204,10 +204,8 @@ namespace LabNation.Decoders
                 }
 
                 int stepSize = frameLength;
-                for (int i = bestOffset; i < bitstream.Length; i += stepSize)
+                for (int i = bestOffset; i < bitstream.Length - frameLength; i += stepSize)
                 {
-                    if (i + selectedDatabits + parityLength + selectedStopbits < bitstream.Length)
-                    {
                         // Find start and stop bit.
                         if (bitstream[i - 1] == '1' && bitstream[i] == '0' && bitstream[i + selectedDatabits + parityLength + selectedStopbits] == '1')
                         {
@@ -313,7 +311,6 @@ namespace LabNation.Decoders
                         {
                             stepSize = 1;
                         }
-                    }
                 }
 
                 double baudrate = 1.0 / (minimumBitlength / 1000.0);
