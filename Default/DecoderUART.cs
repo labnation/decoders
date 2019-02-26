@@ -30,7 +30,7 @@ namespace LabNation.Decoders
             {
                 return new DecoderDescription
                 {
-                    Name = "UART/RS232 decoder",
+                    Name = "UART/RS232 decoder2",
                     ShortName = "UART",
                     Author = "robert44",
                     VersionMajor = 0,
@@ -39,11 +39,20 @@ namespace LabNation.Decoders
                     InputWaveformTypes = new Dictionary<string, Type> { { "Input", typeof(bool) } },
                     Parameters = new DecoderParameter[]
                     {
-                        new DecoderParameterStrings("Baud", new[] { "Auto", "75", "110", "300", "1200", "2400", "4800", "9600", "14400", "19200", "28800", "38400", "57600", "115200" }, "Auto", "Bits per second (baudrate)."),
-                        new DecoderParameterInts("Bits", new[] { 5, 6, 7, 8 }, "Databits", 8, "Data bits."),
+                        new DecoderParameterStrings(
+                            "Baud",
+                            new[] {
+                                "Auto",
+                                "75", "110", "300", "1200", "2400", "4800", "9600",
+                                "14400", "19200", "28800", "38400", "57600", "115200"
+                            },
+                            "Auto",
+                            "Bits per second (baudrate)."
+                            ),
+                        new DecoderParameterInts("Bits", new[] { 5, 6, 7, 8, 9 }, "Databits", 8, "Data bits."),
                         new DecoderParameterStrings("Par", new[] { "None", "Odd", "Even", "Mark", "Space" }, "None", "Parity."),
                         new DecoderParameterInts("Stopbits", new[] { 1, 2 }, "Stopbits", 1, "stop bit setting."),
-                        new DecoderParameterStrings("Mode", new[] { "UART", "RS232" }, "RS232", "Select if the signal needs to be inverted.")
+                        new DecoderParameterStrings("Mode", new[] { "UART", "RS232" }, "UART", "Select if the signal needs to be inverted.")
                     }
                 };
             }
@@ -106,50 +115,24 @@ namespace LabNation.Decoders
 
                 int frameLength = 1 + selectedDatabits + parityLength + selectedStopbits;
 
-                int indexSignalUp = -1;
-                int indexSignalDown = -1;
                 var bits = new List<Bit>();
+                int lastIndex = 0;
 
-                //// Get bit length from the smallest bit.
-                for (int i = 0; i < serialData.Length - 1; i++)
+                for (int i = 1; i < serialData.Length - 1; i++)
                 {
-                    if (serialData[i])
+                    if (serialData[i] != serialData[i - 1])
                     {
-                        if (indexSignalDown == -1)
-                        {
-                            indexSignalDown = i;
-                        }
-
-                        if (indexSignalUp != -1)
-                        {
-                            double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
-                            indexSignalUp = -1;
-                            bits.Add(inverted ? new Bit(i, bitlength, 0) : new Bit(i, bitlength, 1));
-                            //// Debug.WriteLine("bitlength L-H = {0} , index = {1}", bitlength, i);
-                        }
-                    }
-                    else
-                    {
-                        if (indexSignalUp == -1)
-                        {
-                            indexSignalUp = i;
-                        }
-
-                        if (indexSignalDown != -1)
-                        {
-                            double bitlength = Math.Abs(indexSignalDown - indexSignalUp) * samplePeriod * 1000;
-                            indexSignalDown = -1;
-                            bits.Add(inverted ? new Bit(i, bitlength, 1) : new Bit(i, bitlength, 0));
-                            //// Debug.WriteLine("bitlength H-L = {0}, index = {1}", bitlength, i);
-                        }
+                        bits.Add(new Bit(lastIndex, i - lastIndex, serialData[i] != inverted));
+                        lastIndex = i;
                     }
                 }
 
-                double minimumBitlength = 0.00868;
+                //// Get bit length from the smallest bit.
+                int minimumBitlength;
                 if (selectedBaudrate == 0)
                 {
                     var bitlengths = from bit in bits group bit by bit.Length into g where g.Count() > 1 select new { Length = g.Key, Count = g.Count() };
-                    minimumBitlength = double.MaxValue;
+                    minimumBitlength = int.MaxValue;
                     foreach (var bitLength in bitlengths)
                     {
                         if (minimumBitlength > bitLength.Length)
@@ -158,7 +141,7 @@ namespace LabNation.Decoders
                         }
                     }
 
-                    if (Math.Abs(minimumBitlength - double.MaxValue) < 0.1)
+                    if ((int.MaxValue - minimumBitlength) < 0.1)
                     {
                         // possible show error in detecting baudrate.
                         return decoderOutputList.ToArray();
@@ -166,21 +149,21 @@ namespace LabNation.Decoders
                 }
                 else
                 {
-                    minimumBitlength = 1000.0 / selectedBaudrate;
+                    minimumBitlength = (int)(1 / (samplePeriod * selectedBaudrate));
                 }
 
                 var resultBits = new List<Bit>();
-                int indexstep = (int)(minimumBitlength / (1000.0 * samplePeriod));
+                int indexstep = minimumBitlength;
                 var bitstring = new StringBuilder();
 
-                int indexOffset = bits[0].Index + indexstep;
                 foreach (Bit bit in bits)
                 {
-                    var count = (int)Math.Round(bit.Length / minimumBitlength);
+                    var count = (bit.Length + (minimumBitlength / 2))/ minimumBitlength;
+                    int indexOffset = bit.Index;
                     for (var i = 0; i < count; i++)
                     {
                         resultBits.Add(new Bit(indexOffset, indexstep, bit.Value));
-                        bitstring.Append(bit.Value == 1 ? "1" : "0");
+                        bitstring.Append(bit.Value ? "1" : "0");
                         indexOffset += indexstep;
                     }
                 }
@@ -191,15 +174,13 @@ namespace LabNation.Decoders
                     return decoderOutputList.ToArray();
                 }
 
-                resultBits.Add(new Bit(bits[bits.Count - 1].Index + indexstep, indexstep, 1));
-                var bitstr = bitstring.ToString();
-                var bitstream = bitstr.Substring(bitstr.IndexOf('0')) + "1" + "1"; // Add end bit
+                var bitstream = bitstring.ToString();
 
                 int bestOffset = 0;
                 int maxCount = 0;
 
                 // Find the offset that gives the most frames.
-                for (int offset = 0; offset < bitstream.Length / 4; offset++)
+                for (int offset = 1; offset < bitstream.Length / 4; offset++)
                 {
                     int cntFrames = 0;
                     for (int i = offset; i < bitstream.Length; i += frameLength)
@@ -207,7 +188,7 @@ namespace LabNation.Decoders
                         if (i + selectedDatabits + parityLength + selectedStopbits < bitstream.Length)
                         {
                             // Find start and stop bit.
-                            if (bitstream[i] == '0' && bitstream[i + selectedDatabits + parityLength + selectedStopbits] == '1')
+                            if (bitstream[i - 1] == '1' && bitstream[i] == '0' && bitstream[i + selectedDatabits + parityLength + selectedStopbits] == '1')
                             {
                                 cntFrames++;
                             }
@@ -227,7 +208,7 @@ namespace LabNation.Decoders
                     if (i + selectedDatabits + parityLength + selectedStopbits < bitstream.Length)
                     {
                         // Find start and stop bit.
-                        if (bitstream[i] == '0' && bitstream[i + selectedDatabits + parityLength + selectedStopbits] == '1')
+                        if (bitstream[i - 1] == '1' && bitstream[i] == '0' && bitstream[i + selectedDatabits + parityLength + selectedStopbits] == '1')
                         {
                             if ((selectedStopbits == 1) | ((selectedStopbits == 2) && bitstream[i + selectedDatabits + parityLength + 1] == '1'))
                             {
@@ -285,23 +266,46 @@ namespace LabNation.Decoders
                                     }
                                 }
 
-                                if (parityOk)
+                                var databits = databitsStr.ToCharArray();
+                                Array.Reverse(databits);
+                                Int16 data = Convert.ToInt16(new string(databits), 2);
+                                decoderOutputList.Add(
+                                    new DecoderOutputEvent(
+                                        resultBits[i].Index,
+                                        resultBits[i].Index + indexstep,
+                                        DecoderOutputColor.Orange,
+                                        "START"
+                                        ));
+                                decoderOutputList.Add(
+                                    new DecoderOutputValueNumeric(
+                                        resultBits[i].Index + indexstep,
+                                        resultBits[i].Index + (indexstep * (selectedDatabits + 1)),
+                                        DecoderOutputColor.Green,
+                                        data,
+                                        string.Empty,
+                                        selectedDatabits
+                                        ));
+                                int offset = 1;
+                                if (parity != Parity.None)
                                 {
-                                    var databits = databitsStr.ToCharArray();
-                                    Array.Reverse(databits);
-                                    byte data = Convert.ToByte(new string(databits), 2);
-                                    decoderOutputList.Add(new DecoderOutputEvent(resultBits[i].Index - indexstep, resultBits[i].Index, DecoderOutputColor.Orange, "START"));
-                                    decoderOutputList.Add(new DecoderOutputValueNumeric(resultBits[i].Index, resultBits[i].Index + (indexstep * selectedDatabits), DecoderOutputColor.Green, data, string.Empty, 8));
-                                    int offset = 0;
-                                    if (parity != Parity.None)
-                                    {
-                                        string par = string.Format("P:{0}", parityBit);
-                                        decoderOutputList.Add(new DecoderOutputEvent(resultBits[i].Index + (indexstep * selectedDatabits), resultBits[i].Index + (indexstep * (selectedDatabits + 1)), DecoderOutputColor.DarkBlue, par));
-                                        offset++;
-                                    }
-
-                                    decoderOutputList.Add(new DecoderOutputEvent(resultBits[i].Index + (indexstep * (selectedDatabits + offset)), resultBits[i].Index + (indexstep * (selectedDatabits + 1 + offset)), DecoderOutputColor.Blue, "STOP"));
+                                    string par = string.Format("P:{0}", parityBit);
+                                    decoderOutputList.Add(
+                                        new DecoderOutputEvent(
+                                            resultBits[i].Index + (indexstep * (selectedDatabits + 1)),
+                                            resultBits[i].Index + (indexstep * (selectedDatabits + 2)),
+                                            parityOk ? DecoderOutputColor.DarkBlue : DecoderOutputColor.Red,
+                                            par
+                                            ));
+                                    offset++;
                                 }
+
+                                decoderOutputList.Add(
+                                    new DecoderOutputEvent(
+                                        resultBits[i].Index + (indexstep * (selectedDatabits + offset)),
+                                        resultBits[i].Index + (indexstep * (selectedDatabits + 1 + offset)),
+                                        DecoderOutputColor.Blue,
+                                        "STOP"
+                                        ));
                             }
                         }
                         else
@@ -345,7 +349,7 @@ namespace LabNation.Decoders
             /// <param name="index"> The index. </param>
             /// <param name="length"> The length. </param>
             /// <param name="val"> The val. </param>
-            public Bit(int index, double length, int val)
+            public Bit(int index, int length, bool val)
             {
                 this.Index = index;
                 this.Value = val;
@@ -360,12 +364,12 @@ namespace LabNation.Decoders
             /// <summary>
             /// Gets the value.
             /// </summary>
-            public int Value { get; private set; }
+            public bool Value { get; private set; }
 
             /// <summary>
             /// Gets the length.
             /// </summary>
-            public double Length { get; private set; }
+            public int Length { get; private set; }
 
             /// <summary>
             /// The to string.
