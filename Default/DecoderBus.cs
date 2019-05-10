@@ -25,14 +25,14 @@ namespace LabNation.Decoders
                     Description = "Bus decoder, converting 8 bits into a readable value",
                     InputWaveformTypes = new Dictionary<string, Type>() 
                     {
-                        { "B0", typeof(bool?)},
-                        { "B1", typeof(bool?)},
-                        { "B2", typeof(bool?)},
-                        { "B3", typeof(bool?)},
-                        { "B4", typeof(bool?)},
-                        { "B5", typeof(bool?)},
+                        { "B7", typeof(bool?)},
                         { "B6", typeof(bool?)},
-                        { "B7", typeof(bool?)}
+                        { "B5", typeof(bool?)},
+                        { "B4", typeof(bool?)},
+                        { "B3", typeof(bool?)},
+                        { "B2", typeof(bool?)},
+                        { "B1", typeof(bool?)},
+                        { "B0", typeof(bool?)}
                     }
                 };
             }
